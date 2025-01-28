@@ -196,7 +196,6 @@ typing-extensions=4.5.0=pypi_0
 tyro=0.8.11=pypi_0
 tzdata=2024.1=pypi_0
 umap-learn=0.3.10=pypi_0
-uq360=0.2=pypi_0
 urllib3=1.26.20=pypi_0
 wcwidth=0.2.13=pypi_0
 werkzeug=3.0.4=pypi_0
