@@ -1,6 +1,6 @@
 # activated-lora
 
-Repo for training activated LoRAs. 
+Repo for training activated LoRAs. See activated_LoRA.pdf for a description of the method and some results.
 
 Example scripts (not fully general yet)
 
