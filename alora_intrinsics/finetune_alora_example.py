@@ -33,7 +33,7 @@ def get_datasets():
     for ds in DATASET_FILES:
         if ds[-1] == "n": #json
 
-            file = open(DATASET_PATH + ds)
+            file = open(DATASET_PATH + '/' + ds)
             data = json.load(file)
 
 
