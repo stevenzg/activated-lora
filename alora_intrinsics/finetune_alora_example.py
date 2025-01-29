@@ -61,7 +61,7 @@ def process_datasets(datasets,tokenizer,max_rows):
                 # If a system prompt is not needed, it will need to be manually removed from the `string' below.
                 convo = [{"role":"system", "content": ""}] +convo#"You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."}] + convo
                 string = tokenizer.apply_chat_template(convo[:-1], tokenize=False,add_generation_prompt=False)
-                string_to_remove = tokenizer.apply_chat_template(convo[0], tokenize=False,add_generation_prompt=False)
+                string_to_remove = tokenizer.apply_chat_template(convo[0:1], tokenize=False,add_generation_prompt=False)
                 string = string[len(string_to_remove):]
                 
             else:
