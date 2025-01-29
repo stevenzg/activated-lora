@@ -114,13 +114,12 @@ def SFT_data(int_name):
     datasets = process_datasets(data,tokenizer,max_rows = 400000)
 
     merged_dataset = concatenate_datasets(datasets)
-    response_template = INVOCATION_PROMPT
     subsample_size = 40000
     merged_dataset = merged_dataset.shuffle(seed=42).select(range(min(len(merged_dataset),subsample_size)))
 
     print(model_base)
     
-    collator = DataCollatorForCompletionOnlyLM(response_template, tokenizer=tokenizer)
+    collator = DataCollatorForCompletionOnlyLM(INVOCATION_PROMPT, tokenizer=tokenizer)
    
   
     if 1: # aLoRA model
@@ -133,7 +132,7 @@ def SFT_data(int_name):
             target_modules=["q_proj","k_proj", "v_proj"],#Can only do q, k, v layers (for now).
             #layers_to_transform=[38,39]
         )
-        response_tokens = tokenizer(response_template, return_tensors="pt", add_special_tokens=False)
+        response_tokens = tokenizer(INVOCATION_PROMPT, return_tensors="pt", add_special_tokens=False)
         response_token_ids = response_tokens['input_ids']
         peft_model = aLoRAPeftModelForCausalLM(model_base, peft_config,response_token_ids = response_token_ids)
         trainer = SFTTrainer(
@@ -154,12 +153,10 @@ def SFT_data(int_name):
             lora_dropout=0.05,
             bias="none",
             task_type="CAUSAL_LM",
-            target_modules=["q_proj","k_proj", "v_proj"],#Can only do q, k, v layers (for now).
+            target_modules=["q_proj","k_proj", "v_proj"],
             #layers_to_transform=[38,39]
         )
-        response_tokens = tokenizer(response_template, return_tensors="pt", add_special_tokens=False)
-        response_token_ids = response_tokens['input_ids']
-        peft_model = PeftModelForCausalLM(model_base, peft_config,response_token_ids = response_token_ids)
+        peft_model = PeftModelForCausalLM(model_base, peft_config)
         trainer = SFTTrainer(
             peft_model,
             train_dataset=merged_dataset,
