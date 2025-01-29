@@ -59,8 +59,11 @@ def process_datasets(datasets,tokenizer,max_rows):
             convo = ds["conversations"][i]
             if convo[0]["role"] != "system": #Optionally replace default system prompt. The Granite 3.1 chat template inserts a system prompt with today's date by default. 
                 # If a system prompt is not needed, it will need to be manually removed from the `string' below.
-                convo = [{"role":"system", "content": "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."}] + convo
-            string = tokenizer.apply_chat_template(convo[:-1], tokenize=False,add_generation_prompt=False)
+                convo = [{"role":"system", "content": ""}] +convo#"You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."}] + convo
+                string = tokenizer.apply_chat_template(convo[:-1], tokenize=False,add_generation_prompt=False)
+                string = string[3:]
+            else:
+                string = tokenizer.apply_chat_template(convo[:-1], tokenize=False,add_generation_prompt=False)
 
             # Append invocation sequence here.  
             inputs.append(string + INVOCATION_PROMPT) #"<|start_of_role|>" + convo[-1]["role"] + "<|end_of_role|>" )
