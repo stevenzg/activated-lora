@@ -5,8 +5,11 @@ from datasets import Dataset, DatasetDict, load_from_disk, concatenate_datasets
 
 from sklearn.model_selection import train_test_split
 from trl import SFTConfig, SFTTrainer, DataCollatorForCompletionOnlyLM
-from alora_intrinsics.alora.peft_model_alora import PeftModelForCausalLM
+#alora
+from alora_intrinsics.alora.peft_model_alora import PeftModelForCausalLM as aLoRAPeftModelForCausalLM
 from alora_intrinsics.alora.config import aLoraConfig
+# standard lora
+from peft import PeftModelForCausalLM, LoraConfig
 import json
 
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
@@ -22,6 +25,7 @@ INVOCATION_PROMPT = "<|start_of_role|>certainty<|end_of_role|>"
 # HALL_PROMPT = "<|start_of_role|>hallucination<|end_of_role|>"
 DATASET_PATH = "PATH_TO_DATA"
 DATASET_FILES = ["file1.jsonl","file2.json"]
+SAVE_PATH = "PATH_TO_SAVED_MODELS"
 
 
 def get_datasets():
@@ -119,32 +123,58 @@ def SFT_data(int_name):
     collator = DataCollatorForCompletionOnlyLM(response_template, tokenizer=tokenizer)
    
   
-
-    peft_config = aLoraConfig(
-        r=32,
-        lora_alpha=32,
-        lora_dropout=0.05,
-        bias="none",
-        task_type="CAUSAL_LM",
-        target_modules=["q_proj","k_proj", "v_proj"],#Can only do q, k, v layers (for now).
-        #layers_to_transform=[38,39]
-    )
-    response_tokens = tokenizer(response_template, return_tensors="pt", add_special_tokens=False)
-    response_token_ids = response_tokens['input_ids']
-    peft_model = PeftModelForCausalLM(model_base, peft_config,response_token_ids = response_token_ids)
-    trainer = SFTTrainer(
-        peft_model,
-        train_dataset=merged_dataset,
-        args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=6,learning_rate=6e-7,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
-        formatting_func=formatting_prompts_func,
-    data_collator=collator
-    #,
-    )
+    if 1: # aLoRA model
+        peft_config = aLoraConfig(
+            r=32,
+            lora_alpha=32,
+            lora_dropout=0.05,
+            bias="none",
+            task_type="CAUSAL_LM",
+            target_modules=["q_proj","k_proj", "v_proj"],#Can only do q, k, v layers (for now).
+            #layers_to_transform=[38,39]
+        )
+        response_tokens = tokenizer(response_template, return_tensors="pt", add_special_tokens=False)
+        response_token_ids = response_tokens['input_ids']
+        peft_model = aLoRAPeftModelForCausalLM(model_base, peft_config,response_token_ids = response_token_ids)
+        trainer = SFTTrainer(
+            peft_model,
+            train_dataset=merged_dataset,
+            args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-7,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
+            formatting_func=formatting_prompts_func,
+        data_collator=collator
+        #,
+        )
+        trainer.train()
+    
+        peft_model.save_pretrained("SAVE_PATH/8bsft_alora_sz32"+ int_name)
+    else: #standard LoRA. THESE HYPERPARAMETERS ARE NOT TUNED
+        peft_config = LoraConfig(
+            r=6,
+            lora_alpha=32,
+            lora_dropout=0.05,
+            bias="none",
+            task_type="CAUSAL_LM",
+            target_modules=["q_proj","k_proj", "v_proj"],#Can only do q, k, v layers (for now).
+            #layers_to_transform=[38,39]
+        )
+        response_tokens = tokenizer(response_template, return_tensors="pt", add_special_tokens=False)
+        response_token_ids = response_tokens['input_ids']
+        peft_model = PeftModelForCausalLM(model_base, peft_config,response_token_ids = response_token_ids)
+        trainer = SFTTrainer(
+            peft_model,
+            train_dataset=merged_dataset,
+            args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-7,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
+            formatting_func=formatting_prompts_func,
+        data_collator=collator
+        #,
+        )
+        trainer.train()
+    
+        peft_model.save_pretrained(SAVE_PATH + "/8bsft_standard_lora_sz6"+ int_name)
+        
 
  
-    trainer.train()
     
-    peft_model.save_pretrained("/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/8bsft_alora_sz32"+ int_name)
     
 
 
