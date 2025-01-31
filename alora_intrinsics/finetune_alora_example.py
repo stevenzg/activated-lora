@@ -150,7 +150,7 @@ def SFT_data(int_name):
         )
         trainer.train()
     
-        peft_model.save_pretrained("SAVE_PATH/8bsft_alora_sz32"+ int_name)
+        peft_model.save_pretrained(SAVE_PATH + "/8bsft_alora_sz32"+ int_name)
     else: #standard LoRA. THESE HYPERPARAMETERS ARE NOT TUNED
         peft_config = LoraConfig(
             r=6,
