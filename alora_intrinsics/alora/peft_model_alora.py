@@ -1819,6 +1819,7 @@ class PeftModelForCausalLM(PeftModel):
         elif self.alora_offsets is not None:
             alora_offsets = self.alora_offsets
         else:
+            warnings.warn('ALoRA offsets not available or computed. Adapter disabled')
             alora_offsets = [0] #Do not use adapter. This does need to be consistent from train to test though.
         
         #Pass forward to peft hooks
@@ -1832,8 +1833,8 @@ class PeftModelForCausalLM(PeftModel):
 
 #        print('forward')
  #       print(input_ids)
-        print('offsets')
-        print(alora_offsets)
+ #       print('offsets')
+#        print(alora_offsets)
         peft_config = self.active_peft_config
         if not peft_config.is_prompt_learning:
             #if self.base_model.config.model_type == "mpt":
