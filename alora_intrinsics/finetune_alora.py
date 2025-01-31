@@ -58,8 +58,14 @@ def process_datasets(datasets,tokenizer,max_rows):
         for i in range(200,min(len(ds["conversations"]),max_rs)):
             convo = ds["conversations"][i]
             if convo[0]["role"] != "system":
-                convo = [{"role":"system", "content": "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."}] + convo
-            string = tokenizer.apply_chat_template(convo[:-1], tokenize=False,add_generation_prompt=False)
+                convo = [{"role":"system", "content":""}] + convo# "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."}] + convo
+                string = tokenizer.apply_chat_template(convo[:-1], tokenize=False,add_generation_prompt=False)
+                string_to_remove = tokenizer.apply_chat_template(convo[0:1], tokenize=False,add_generation_prompt=False)
+                string = string[len(string_to_remove):]
+                print('hi')
+                print(string)
+            else:
+                string = tokenizer.apply_chat_template(convo[:-1], tokenize=False,add_generation_prompt=False)
             if convo[-1]["role"] == "Hallucination_tag":
                 convo[-1]["role"] = "hallucination"
                 if convo[-1]["content"] == "1":

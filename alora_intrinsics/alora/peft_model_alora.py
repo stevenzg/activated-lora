@@ -1786,7 +1786,7 @@ class PeftModelForCausalLM(PeftModel):
         **kwargs,
     ):
         # Figure out alora_offsets
-        if self.response_token_ids is not None and self.disable_adapters == False:
+        if self.response_token_ids is not None: #and self.disable_adapters == False:
             alora_offsets = [1]*len(input_ids)
             for i in range(len(input_ids)):
                 response_token_ids_start_idx = None
@@ -1801,7 +1801,7 @@ class PeftModelForCausalLM(PeftModel):
 
                                 response_token_ids_start_idx = idx
                                 response_token_ids_end_idx = idx + len(self.response_token_ids[ii])
-
+    
                 if response_token_ids_start_idx is None:
                     warnings.warn(
                             f"Could not find response key in the "
@@ -1813,6 +1813,8 @@ class PeftModelForCausalLM(PeftModel):
                     #ks[i] = 1
                  
                 else:
+                    print(self.response_token_ids)
+                    print(input_ids[i])
                     alora_offsets[i] = len(input_ids[i]) - response_token_ids_start_idx
         elif self.alora_offsets is not None:
             alora_offsets = self.alora_offsets
@@ -1830,8 +1832,8 @@ class PeftModelForCausalLM(PeftModel):
 
 #        print('forward')
  #       print(input_ids)
-  #      print('ks')
-   #     print(ks)
+        print('offsets')
+        print(alora_offsets)
         peft_config = self.active_peft_config
         if not peft_config.is_prompt_learning:
             #if self.base_model.config.model_type == "mpt":
