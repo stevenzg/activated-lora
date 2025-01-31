@@ -38,7 +38,7 @@ def get_datasets():
 
 
         else: #jsonl
-            file = open(DATASET_PATH + ds)
+            file = open(DATASET_PATH + '/' + ds)
             data = {"conversations":[(json.loads(line))["messages"] for line in file]}
         datasets.append(data)
     return datasets
