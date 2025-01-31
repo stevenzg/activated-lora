@@ -23,9 +23,9 @@ MODEL_NAME = "ibm-granite/granite-3.1-8b-instruct"
 INVOCATION_PROMPT = "<|start_of_role|>assistant<|end_of_role|>"
 # SAFETY_PROMPT = "<|start_of_role|>safety<|end_of_role|>"
 # HALL_PROMPT = "<|start_of_role|>hallucination<|end_of_role|>"
-DATASET_PATH = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/alora-intrinsics/data/chat_template_dump_0.4/"
+DATASET_PATH = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/alora-intrinsics/data/chat_template_dump_0.4"
 DATASET_FILES = ["train_raft.jsonl"]
-SAVE_PATH = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/"
+SAVE_PATH = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora"
 
 
 def get_datasets():
@@ -38,7 +38,7 @@ def get_datasets():
 
 
         else: #jsonl
-            file = open(DATASET_PATH + ds)
+            file = open(DATASET_PATH +'/' +  ds)
             data = {"conversations":[(json.loads(line)) for line in file]}#,"documents":[(json.loads(line))["documents"] for line in file]}
         datasets.append(data)
     return datasets
@@ -150,7 +150,7 @@ def SFT_data(int_name):
         )
         trainer.train()
     
-        peft_model.save_pretrained("SAVE_PATH/RAG_alora_sz32"+ int_name)
+        peft_model.save_pretrained(SAVE_PATH + "/RAG_alora_sz32"+ int_name)
     else: #standard LoRA. THESE HYPERPARAMETERS ARE NOT TUNED
         peft_config = LoraConfig(
             r=6,

@@ -1813,8 +1813,8 @@ class PeftModelForCausalLM(PeftModel):
                     #ks[i] = 1
                  
                 else:
-                    print(self.response_token_ids)
-                    print(input_ids[i])
+#                    print(self.response_token_ids)
+ #                   print(input_ids[i])
                     alora_offsets[i] = len(input_ids[i]) - response_token_ids_start_idx
         elif self.alora_offsets is not None:
             alora_offsets = self.alora_offsets
