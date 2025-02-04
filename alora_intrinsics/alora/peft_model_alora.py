@@ -1772,7 +1772,7 @@ class PeftModelForCausalLM(PeftModel):
         super().__init__(model, peft_config, adapter_name, **kwargs)
         self.base_model_prepare_inputs_for_generation = self.base_model.prepare_inputs_for_generation
         self.response_token_ids = response_token_ids
-        self.alora_offsets = alora_offsets
+        #self.alora_offsets = alora_offsets
     def forward(
         self,
         input_ids=None,
@@ -1786,7 +1786,11 @@ class PeftModelForCausalLM(PeftModel):
         **kwargs,
     ):
         # Figure out alora_offsets
-        if self.response_token_ids is not None: #and self.disable_adapters == False:
+        alora_offsets = kwargs.pop("alora_offsets",None)
+        if self.disable_adapters == True:
+            alora_offsets = [0] #Do not use adapter.
+        
+        elif self.response_token_ids is not None and alora_offsets is None:#Compute offsets using defined invocation sequence # and self.disable_adapters == False:
             alora_offsets = [1]*len(input_ids)
             for i in range(len(input_ids)):
                 response_token_ids_start_idx = None
@@ -1816,9 +1820,9 @@ class PeftModelForCausalLM(PeftModel):
 #                    print(self.response_token_ids)
  #                   print(input_ids[i])
                     alora_offsets[i] = len(input_ids[i]) - response_token_ids_start_idx
-        elif self.alora_offsets is not None:
-            alora_offsets = self.alora_offsets
-        else:
+        #elif self.alora_offsets is not None:
+        #    alora_offsets = self.alora_offsets
+        elif alora_offsets is None:
             warnings.warn('ALoRA offsets not available or computed. Adapter disabled')
             alora_offsets = [0] #Do not use adapter. This does need to be consistent from train to test though.
         
@@ -1975,14 +1979,17 @@ class PeftModelForCausalLM(PeftModel):
             if not peft_config.is_prompt_learning:
 #                print(args)
 #                print(kwargs)
-                self.alora_offsets = kwargs.pop("alora_offsets",None)
+                alora_offsets = kwargs.pop("alora_offsets",None)
             
              
-                # Figure out ks
+                
                 input_ids = args[0]
                 if len(input_ids.shape) == 1:
                     input_ids = [args[0]]
-                if self.alora_offsets is None and self.response_token_ids is not None and self.disable_adapters == False:
+                if self.disable_adapters == True:
+                    alora_offsets = [0] #Do not use adapter.
+                # Figure out alora_offsets
+                elif alora_offsets is None and self.response_token_ids is not None:# and self.disable_adapters == False:
                     alora_offsets = [1]*len(input_ids)
                     for i in range(len(input_ids)):
                         response_token_ids_start_idx = None
@@ -2009,11 +2016,12 @@ class PeftModelForCausalLM(PeftModel):
 
                         else:
                             alora_offsets[i] = len(input_ids[i])-1 - response_token_ids_start_idx
-                elif self.alora_offsets is not None:
-                    alora_offsets = self.alora_offsets
-                else:
-  
+                #elif self.alora_offsets is not None:
+                #    alora_offsets = self.alora_offsets
+                elif alora_offsets is None:
+                    warnings.warn('ALoRA offsets not available or computed. Adapter disabled')
                     alora_offsets = [0]
+                
 
 #                print(ks)
                 #Pass forward to peft hooks

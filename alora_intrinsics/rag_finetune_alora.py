@@ -129,7 +129,7 @@ def SFT_data(int_name):
   
     if 1: # aLoRA model
         peft_config = aLoraConfig(
-            r=32,
+            r=64,
             lora_alpha=32,
             lora_dropout=0.05,
             bias="none",
@@ -143,14 +143,19 @@ def SFT_data(int_name):
         trainer = SFTTrainer(
             peft_model,
             train_dataset=merged_dataset,
-            args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-7,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
+            args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=6,learning_rate=6e-7,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
             formatting_func=formatting_prompts_func,
         data_collator=collator
         #,
         )
         trainer.train()
     
-        peft_model.save_pretrained(SAVE_PATH + "/RAG_alora_sz32"+ int_name)
+        peft_model.save_pretrained(SAVE_PATH + "/RAG_alora_sz64_long6"+ int_name)
+
+
+
+        #####################################################################
+        #####################################################################
     else: #standard LoRA. THESE HYPERPARAMETERS ARE NOT TUNED
         peft_config = LoraConfig(
             r=6,
@@ -165,7 +170,7 @@ def SFT_data(int_name):
         trainer = SFTTrainer(
             peft_model,
             train_dataset=merged_dataset,
-            args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-7,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
+            args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=1,learning_rate=6e-7,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
             formatting_func=formatting_prompts_func,
         data_collator=collator
         #,
