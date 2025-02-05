@@ -1,16 +1,50 @@
-# activated-lora
+# Activated LoRA
 
-Repo for training activated LoRAs. See activated_LoRA.pdf for a description of the method and some results.
+**Repository for training Activated LoRAs.**  
+See [`activated_LoRA.pdf`](activated_LoRA.pdf) for a detailed description of the method and some results.
 
-Example scripts (not fully general yet)
+---
 
-Source code: alora_intrinsics/alora/
+## Source Code
+The main implementation can be found in:
 
-Training: alora_intrinsics/finetune_alora_example.py
-       Run "python alora_intrinsics/finetune_alora_example.py --int_name <INTRINSIC_NAME>"
+**Source directory:** [`alora_intrinsics/alora/`](alora_intrinsics/alora/)
 
-"hello world" test script for running 3 trained intrinsics aLoRAs in a basic setting, using the kV cache and Huggingface libraries: alora_intrinsics/experiments/cache_hello_world.py
+---
 
-Python environment used listed in requirements.txt
+## Training Example
+To train an **Activated LoRA**, use the following script as a guide:
 
-Example data jsonl file: example_data.jsonl
+```bash
+python alora_intrinsics/finetune_alora_example.py --int_name <INTRINSIC_NAME>
+```
+
+**Script location:** [`alora_intrinsics/finetune_alora_example.py`](alora_intrinsics/finetune_alora_example.py)
+
+---
+
+## Testing: "Hello World" Example
+A simple test script is available for running three trained **intrinsic aLoRAs** using the **kV cache** and **Hugging Face libraries**:
+
+**Test script location:** [`alora_intrinsics/experiments/cache_hello_world.py`](alora_intrinsics/experiments/cache_hello_world.py)
+
+---
+
+## Environment Setup
+A python environment can be found in the provided requirements file:
+
+```bash
+pip install -r requirements.txt
+```
+
+
+---
+
+## Example Data
+An example dataset in JSONL format is available for formatting reference:
+
+**Data file:** [`example_data.jsonl`](example_data.jsonl)
+
+
+
+
