@@ -100,22 +100,17 @@ def SFT_data(int_name):
     data = get_datasets()
 
 
+    # Load model
+    model_name = MODEL_NAME
 
-
-
-    if 1: #LORA:
-       
-   
-        model_name = MODEL_NAME
-
-        token = os.getenv("HF_MISTRAL_TOKEN")
-        model_dir = model_name #os.path.join(DMF_MODEL_CACHE, model_name)
-        tokenizer = AutoTokenizer.from_pretrained(model_dir,padding_side='left',trust_remote_code=True,token=token)
+    token = os.getenv("HF_MISTRAL_TOKEN")
+    model_dir = model_name #os.path.join(DMF_MODEL_CACHE, model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_dir,padding_side='left',trust_remote_code=True,token=token)
         
-        model_base = AutoModelForCausalLM.from_pretrained(model_dir,device_map = 'auto', use_cache=False)
-        tokenizer.pad_token = tokenizer.eos_token
-        model_base.config.pad_token_id = model_base.config.eos_token_id
-        tokenizer.add_special_tokens = False
+    model_base = AutoModelForCausalLM.from_pretrained(model_dir,device_map = 'auto', use_cache=False)
+    tokenizer.pad_token = tokenizer.eos_token
+    model_base.config.pad_token_id = model_base.config.eos_token_id
+    tokenizer.add_special_tokens = False
     datasets = process_datasets(data,tokenizer,max_rows = 400000)
 
     merged_dataset = concatenate_datasets(datasets)
