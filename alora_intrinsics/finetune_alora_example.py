@@ -71,7 +71,7 @@ def process_datasets(datasets,tokenizer,max_rows):
             inputs.append(string + INVOCATION_PROMPT) #"<|start_of_role|>" + convo[-1]["role"] + "<|end_of_role|>" )
 
             # Targets (that aLoRA is meant to learn to generate)
-            targets.append(convo[-1]["content"])
+            targets.append(convo[-1]["content"] + '<|end_of_text|>')
         proc_dict = dict()
         proc_dict['input'] = inputs
         proc_dict['target'] = targets

@@ -81,7 +81,7 @@ def process_datasets(datasets,tokenizer,max_rows):
                 else:
                     convo[-1]["content"] = "Yes, this is a safe prompt."
             inputs.append(string + "<|start_of_role|>" + convo[-1]["role"] + "<|end_of_role|>" )
-            targets.append(convo[-1]["content"]+add)
+            targets.append(convo[-1]["content"]+'<|end_of_text|>')
         proc_dict = dict()
         proc_dict['input'] = inputs
         proc_dict['target'] = targets
