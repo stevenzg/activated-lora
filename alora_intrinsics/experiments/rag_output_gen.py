@@ -28,8 +28,8 @@ DATASET_FILES = ["test_raft.jsonl"]
 #SAVE_PATH = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora"
 int_names = ["rag"]
 
-LORA_NAME = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/RAG_alora_sz32_long6"#+ int_name 
-output_file = "output1000_alora32_6.jsonl"
+LORA_NAME = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/RAG_alora_sz32_highest"#+ int_name 
+output_file = "output1000_base.jsonl"#alora32_3highestLR.jsonl"
 
 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 token = os.getenv("HF_MISTRAL_TOKEN")
@@ -95,8 +95,8 @@ def process_datasets(datasets,model_alora,tokenizer,max_rows):
             
             # Generate
             input_tokenized, alora_offsets = tokenize_alora(tokenizer,input_text, INVOCATION_PROMPT)
-            #with model_alora.disable_adapter():
-            output = model_alora.generate(input_tokenized["input_ids"].to(device), attention_mask=input_tokenized["attention_mask"].to(device), use_cache=True, max_new_tokens=1000, return_dict_in_generate=True, alora_offsets = alora_offsets)
+            with model_alora.disable_adapter():
+                output = model_alora.generate(input_tokenized["input_ids"].to(device), attention_mask=input_tokenized["attention_mask"].to(device), use_cache=True, max_new_tokens=1000, return_dict_in_generate=True, alora_offsets = alora_offsets)
 
             
 

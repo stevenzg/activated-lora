@@ -13,7 +13,7 @@ import json
 
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 
-adapter = 'aLoRA' #'LoRA'
+
 
 DATA_PATH = os.getenv("HF_DATASETS_CACHE")
 MODEL_NAME = "ibm-granite/granite-3.1-8b-instruct"
@@ -107,7 +107,8 @@ def formatting_prompts_func(example):
 
 @click.command()
 @click.option('--int_name', type=click.STRING, help='dataset')
-def SFT_data(int_name):
+@click.option('--adapter', type=click.STRING, help='aLoRA or LoRA')
+def SFT_data(int_name,adapter):
 
     data = get_datasets()
 
@@ -144,7 +145,7 @@ def SFT_data(int_name):
     print(model_base)
     
     collator = DataCollatorForCompletionOnlyLM(response_template, tokenizer=tokenizer)
-   
+    SAVE_PATH = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora"
     if adapter == 'aLoRA': # aLoRA model
         peft_config = aLoraConfig(
             r=32,
@@ -168,7 +169,7 @@ def SFT_data(int_name):
         )
         trainer.train()
     
-        peft_model.save_pretrained(SAVE_PATH + "/feb6_8bsft_alora_sz32"+ int_name)
+        peft_model.save_pretrained(SAVE_PATH + "/feb6_8bsft_alora_sz32_"+ int_name)
     else: #standard LoRA. THESE HYPERPARAMETERS ARE NOT TUNED
         peft_config = LoraConfig(
             r=6,
@@ -183,14 +184,14 @@ def SFT_data(int_name):
         trainer = SFTTrainer(
             peft_model,
             train_dataset=merged_dataset,
-            args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=1,learning_rate=6e-5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
+            args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=1,learning_rate=3e-6,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
             formatting_func=formatting_prompts_func,
         data_collator=collator
         #,
         )
         trainer.train()
-    
-        peft_model.save_pretrained(SAVE_PATH + "/feb6_8bsft_standard_lora_sz6"+ int_name)
+            
+        peft_model.save_pretrained(SAVE_PATH + "/feb6_8bsft_standard_lora_sz6_"+ int_name)
         
 
 
