@@ -12,7 +12,7 @@ HALL_PROMPT = "<|start_of_role|>hallucination<|end_of_role|>"
 
 token = os.getenv("HF_MISTRAL_TOKEN")
 
-BASE_NAME = '/proj/dmfexp/statllm/users/kgreenewald/models/granite-3.1-8b-instruct-r241212a'#"ibm-granite/granite-3.0-8b-instruct"
+BASE_NAME = "ibm-granite/granite-3.1-8b-instruct"#'/proj/dmfexp/statllm/users/kgreenewald/models/granite-3.1-8b-instruct-r241212a'#"ibm-granite/granite-3.0-8b-instruct"
 LORA_NAME = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/8bsft_aloraV2_sz32"#+ int_name 
 
 
