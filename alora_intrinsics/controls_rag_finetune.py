@@ -133,7 +133,7 @@ class SaveBestModelCallback(TrainerCallback):
 @click.command()
 @click.option('--adapter', type=click.STRING, help='adapter, LoRA or aLoRA')
 @click.option('--int_name', type=click.STRING, help='dataset')
-def SFT_data(int_name):
+def SFT_data(int_name,adapter):
 
     data = get_datasets()
 
@@ -179,10 +179,10 @@ def SFT_data(int_name):
         response_token_ids = response_tokens['input_ids']
         peft_model = aLoRAPeftModelForCausalLM(model_base, peft_config,response_token_ids = response_token_ids)
         #tmp_dir = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp"
-        sft_args = SFTConfig(output_dir=SAVE_PATH + "/8bsft_standard_lora_sz6"+ int_name,
+        sft_args = SFTConfig(output_dir=SAVE_PATH + "/feb13_8bsft_Control_alora_sz32"+ int_name,
                 evaluation_strategy = "steps",
                 eval_steps=300,
-                dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-7*5*10,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True)
+                dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-7*5*10/5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True)
         trainer = SFTTrainer(
             peft_model,
             train_dataset=train_dataset,
@@ -196,7 +196,7 @@ def SFT_data(int_name):
         trainer.train()
         #load from best
         #peft_best = aLoRAPeftModelForCausalLM.from_pretrained(model_base,tmp_dir + '/adapter')
-        #peft_best.save_pretrained(SAVE_PATH + "/RAG_alora_sz32_highest_best_val"+ int_name)
+        peft_model.save_pretrained(SAVE_PATH + "/feb13_8bsft_Control_alora_sz32_last"+ int_name)
 
 
 
@@ -215,10 +215,10 @@ def SFT_data(int_name):
         peft_model = PeftModelForCausalLM(model_base, peft_config)
         
         #tmp_dir = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp"
-        sft_args = SFTConfig(output_dir=SAVE_PATH + "/8bsft_standard_lora_sz6"+ int_name,
+        sft_args = SFTConfig(output_dir=SAVE_PATH + "/feb13_8bsft_Control_standard_lora_sz6"+ int_name,
                 evaluation_strategy = "steps",
                 eval_steps=300,
-                dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-7*5*10,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True)
+                dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-7*5*10/5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True)
         trainer = SFTTrainer(
             peft_model,
             train_dataset=train_dataset,
@@ -249,7 +249,7 @@ def SFT_data(int_name):
         #)
         #trainer.train()
     
-        #peft_best.save_pretrained(SAVE_PATH + "/8bsft_standard_lora_sz6"+ int_name)
+        peft_model.save_pretrained(SAVE_PATH + "/feb13_8bsft_Control_standard_lora_sz6_last"+ int_name)
         
 
  

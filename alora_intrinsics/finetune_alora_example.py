@@ -104,12 +104,12 @@ def SFT_data(int_name):
     model_name = MODEL_NAME
 
     token = os.getenv("HF_MISTRAL_TOKEN")
-    model_dir = model_name #os.path.join(DMF_MODEL_CACHE, model_name)
+    model_dir = model_name
     tokenizer = AutoTokenizer.from_pretrained(model_dir,padding_side='left',trust_remote_code=True,token=token)
         
     model_base = AutoModelForCausalLM.from_pretrained(model_dir,device_map = 'auto', use_cache=False)
     tokenizer.pad_token = tokenizer.eos_token
-    model_base.config.pad_token_id = model_base.config.eos_token_id
+    
     tokenizer.add_special_tokens = False
     datasets = process_datasets(data,tokenizer,max_rows = 400000)
 
@@ -138,7 +138,7 @@ def SFT_data(int_name):
         trainer = SFTTrainer(
             peft_model,
             train_dataset=merged_dataset,
-            args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-7,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
+            args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
             formatting_func=formatting_prompts_func,
         data_collator=collator
         #,
@@ -146,7 +146,7 @@ def SFT_data(int_name):
         trainer.train()
     
         peft_model.save_pretrained(SAVE_PATH + "/8bsft_alora_sz32"+ int_name)
-    else: #standard LoRA. THESE HYPERPARAMETERS ARE NOT TUNED
+    else: #standard LoRA. 
         peft_config = LoraConfig(
             r=6,
             lora_alpha=32,
@@ -160,7 +160,7 @@ def SFT_data(int_name):
         trainer = SFTTrainer(
             peft_model,
             train_dataset=merged_dataset,
-            args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-7,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
+            args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
             formatting_func=formatting_prompts_func,
         data_collator=collator
         #,

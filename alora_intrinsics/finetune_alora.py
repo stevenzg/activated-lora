@@ -53,7 +53,7 @@ def process_datasets(datasets,tokenizer,max_rows):
         if ds["conversations"][0][-1]["role"] == "certainty":
             max_rs = max_rows * 8
 
-            add = "5%"#"5%<|end_of_text|>"
+            add = "5%<|end_of_text|>"#"5%<|end_of_text|>"
             print(f'Total rows: {len(ds["conversations"])}, max rows: {max_rs}')
         
         for i in range(200,min(len(ds["conversations"]),max_rs)):
@@ -79,9 +79,9 @@ def process_datasets(datasets,tokenizer,max_rows):
             if convo[-1]["role"] == "SAFETY_EXCEPTION":
                 convo[-1]["role"]= "safety"
                 if convo[-1]["content"] == "1":
-                    convo[-1]["content"] = "N"#"No, this is unsafe!"
+                    convo[-1]["content"] = "N<|end_of_text|>"#"No, this is unsafe!"
                 else:
-                    convo[-1]["content"] = "Y"#es, this is a safe prompt."
+                    convo[-1]["content"] = "Y<|end_of_text|>"#es, this is a safe prompt."
             inputs.append(string + "<|start_of_role|>" + convo[-1]["role"] + "<|end_of_role|>" )
             targets.append(convo[-1]["content"]+'<|end_of_text|>')
         proc_dict = dict()
@@ -127,7 +127,7 @@ def SFT_data(int_name,adapter):
         
     model_base = AutoModelForCausalLM.from_pretrained(model_dir,device_map = 'auto', use_cache=False)
     tokenizer.pad_token = tokenizer.eos_token
-    model_base.config.pad_token_id = model_base.config.eos_token_id
+
     tokenizer.add_special_tokens = False
     datasets = process_datasets(data,tokenizer,max_rows = 400000)
     if int_name == "certainty":
@@ -162,7 +162,7 @@ def SFT_data(int_name,adapter):
         trainer = SFTTrainer(
             peft_model,
             train_dataset=merged_dataset,
-            args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-7*2,max_seq_length = 4096,per_device_train_batch_size = 3,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
+            args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-7*2 *50,max_seq_length = 4096,per_device_train_batch_size = 3,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
             formatting_func=formatting_prompts_func,
         data_collator=collator
         #,
