@@ -105,7 +105,7 @@ def SFT_data(int_name):
 
     token = os.getenv("HF_MISTRAL_TOKEN")
     model_dir = model_name
-    tokenizer = AutoTokenizer.from_pretrained(model_dir,padding_side='left',trust_remote_code=True,token=token)
+    tokenizer = AutoTokenizer.from_pretrained(model_dir,padding_side='right',trust_remote_code=True,token=token)
         
     model_base = AutoModelForCausalLM.from_pretrained(model_dir,device_map = 'auto', use_cache=False)
     tokenizer.pad_token = tokenizer.eos_token
