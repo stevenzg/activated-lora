@@ -14,7 +14,7 @@ import json
 
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 
-peft_type = 'LoRA' #'aLoRA'
+peft_type = 'aLoRA' #'LoRA' #'aLoRA', 'base'
 
 DATA_PATH = os.getenv("HF_DATASETS_CACHE")
 BASE_NAME = "ibm-granite/granite-3.1-8b-instruct"
@@ -25,14 +25,16 @@ INVOCATION_PROMPT_SET = ['<|start_of_role|>assistant {"length": "'+ lngth + '"}<
 # SAFETY_PROMPT = "<|start_of_role|>safety<|end_of_role|>"
 # HALL_PROMPT = "<|start_of_role|>hallucination<|end_of_role|>"
 DATASET_PATH = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/alora-intrinsics/data/chat_template_dump_with_controls_0.4"
-DATASET_FILES = ["test_raft.jsonl"]
+DATASET_FILES = ["test_raft.jsonl", "test_raft.jsonl", "test_raft.jsonl"]
 
-int_names = ["ragControl"]
-if peft_type == 'aLoRA':
-    LORA_NAME = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/8bsft_Control_alora_sz32" #RAG_alora_sz32_highest"#+ int_name 
+int_names = ["controlrag"]
+#int_names = ["ragControl"]
+prefix = 'feb21_8'
+if peft_type == 'aLoRA' or peft_type == 'base':
+    LORA_NAME = f"/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/{prefix}_8bsft_Control_alora_sz32_last"#_last #RAG_alora_sz32_highest"#+ int_name 
 else:
-    LORA_NAME = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/8bsft_Control_standard_lora_sz6" #RAG_alora_sz32_highest"#+ int_name 
-output_file = "controlAlora.jsonl"#"output1000_base.jsonl"#alora32_3highestLR.jsonl"
+    LORA_NAME = f"/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/{prefix}_8bsft_Control_standard_lora_sz6" #RAG_alora_sz32_highest"#+ int_name 
+output_file = f"control2{prefix}{peft_type}"#"output1000_base.jsonl"#alora32_3highestLR.jsonl"
 
 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 token = os.getenv("HF_MISTRAL_TOKEN")
@@ -47,8 +49,8 @@ if peft_type == 'aLoRA':
 else:
     model_alora = PeftModelForCausalLM.from_pretrained(model_base, LORA_NAME + int_names[0],adapter_name = int_names[0])
 for intname in int_names[1:]:
-        model_alora.load_adapter(LORA_NAME + intname, adapter_name = intname)
-model_alora.set_adapter("ragControl")
+    model_alora.load_adapter(LORA_NAME + intname, adapter_name = intname)
+model_alora.set_adapter(int_names[0])
 
 
 
@@ -68,8 +70,9 @@ def get_datasets():
     return datasets
 def process_datasets(datasets,model_alora,tokenizer,max_rows):
     proc_datasets = []
-
+    ln_ix = -1
     for ds in datasets:
+        ln_ix+= 1
         inputs = []
         targets = []
         add = ""
@@ -100,31 +103,41 @@ def process_datasets(datasets,model_alora,tokenizer,max_rows):
                 ix = 1
             else: #short
                 ix = 2
-            input_text= string + INVOCATION_PROMPT_SET[ix] #"<|start_of_role|>" + convo[-1]["role"] + "<|end_of_role|>" ) 
+            ix = ln_ix
+            if ln_ix == 0:
+                ds["conversations"][i]["controls"]["length"] = "long"
+            elif ln_ix == 1:
+                ds["conversations"][i]["controls"]["length"] = "medium"
+            else:
+                ds["conversations"][i]["controls"]["length"] = "short"
+            input_text= string #+ INVOCATION_PROMPT_SET[ix] #"<|start_of_role|>" + convo[-1]["role"] + "<|end_of_role|>" ) 
             
             
             # Targets (that aLoRA is meant to learn to generate)
             targets.append(convo[-1]["content"])
             
             # Generate
-            input_tokenized, alora_offsets = tokenize_alora(tokenizer,input_text, INVOCATION_PROMPT)
-            #with model_alora.disable_adapter():
+            input_tokenized, alora_offsets = tokenize_alora(tokenizer,input_text, INVOCATION_PROMPT_SET[ix])
+            if peft_type == 'base':
+                with model_alora.disable_adapter():
+                    output = model_alora.generate(input_tokenized["input_ids"].to(device), attention_mask=input_tokenized["attention_mask"].to(device), use_cache=True, max_new_tokens=500, return_dict_in_generate=True)
+
             if peft_type == 'aLoRA':
-                output = model_alora.generate(input_tokenized["input_ids"].to(device), attention_mask=input_tokenized["attention_mask"].to(device), use_cache=True, max_new_tokens=1000, return_dict_in_generate=True, alora_offsets = alora_offsets)
+                output = model_alora.generate(input_tokenized["input_ids"].to(device), attention_mask=input_tokenized["attention_mask"].to(device), use_cache=True, max_new_tokens=500, return_dict_in_generate=True, alora_offsets = alora_offsets)
             else:
-                output = model_alora.generate(input_tokenized["input_ids"].to(device), attention_mask=input_tokenized["attention_mask"].to(device), use_cache=True, max_new_tokens=1000, return_dict_in_generate=True)
+                output = model_alora.generate(input_tokenized["input_ids"].to(device), attention_mask=input_tokenized["attention_mask"].to(device), use_cache=True, max_new_tokens=500, return_dict_in_generate=True)
             
             
 
 
-
+            
             output_text = tokenizer.decode(output.sequences[0])
-            print(output_text)
+#            print(output_text)
             answer = output_text.split(INVOCATION_PROMPT_SET[ix])[-1]
             #record in dataset
             ds["conversations"][i]["output"] = answer
-
-
+            print(answer)
+            print(f"length: {lngth}")
 
         #proc_dict = dict()
         #proc_dict['input'] = inputs
@@ -148,9 +161,12 @@ processed = process_datasets(datasets,model_alora,tokenizer,2000000)
 output_path = DATASET_PATH + '/' +output_file
 
 # Open the file in write mode
-with open(output_path, "w", encoding="utf-8") as f:
-    for conversation in processed[0]["conversations"]:
-        f.write(json.dumps(conversation) + "\n")  # Convert dict to JSON string and write
+for ds_ix in range(len(processed)):
+    lnth = processed[ds_ix]["conversations"][0]["controls"]["length"]
+    with open(output_path + lnth + ".jsonl", "w", encoding="utf-8") as f:
+        #for ds_ix in range(len(processed)):
+        for conversation in processed[ds_ix]["conversations"]:
+            f.write(json.dumps(conversation) + "\n")  # Convert dict to JSON string and write
 
 
 

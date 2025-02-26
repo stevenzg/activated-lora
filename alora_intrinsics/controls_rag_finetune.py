@@ -79,7 +79,7 @@ def process_datasets(datasets,tokenizer,max_rows):
             inputs.append(string + INVOCATION_PROMPT_SET[ix]) #"<|start_of_role|>" + convo[-1]["role"] + "<|end_of_role|>" )
 
             # Targets (that aLoRA is meant to learn to generate)
-            targets.append(convo[-1]["content"] + '<|end_of_text|>')
+            targets.append(convo[-1]["content"].split('Reference(s)')[0] + '<|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|><|end_of_text|>')
         proc_dict = dict()
         proc_dict['input'] = inputs
         proc_dict['target'] = targets
@@ -120,7 +120,7 @@ class SaveBestModelCallback(TrainerCallback):
         eval_loss = metrics.get("eval_loss")
         if eval_loss is not None and eval_loss < self.best_eval_loss:
             self.best_eval_loss = eval_loss  # Update best loss
-            #print(f"🔥 New best model found! Saving at step {state.global_step} with loss {eval_loss}")
+          
 
             # Ensure tied weights are applied before saving
             #if getattr(trainer.model, "tie_weights", None):
@@ -148,7 +148,7 @@ def SFT_data(int_name,adapter):
 
     token = os.getenv("HF_MISTRAL_TOKEN")
     model_dir = model_name #os.path.join(DMF_MODEL_CACHE, model_name)
-    tokenizer = AutoTokenizer.from_pretrained(model_dir,padding_side='left',trust_remote_code=True,token=token)
+    tokenizer = AutoTokenizer.from_pretrained(model_dir,padding_side='right',trust_remote_code=True,token=token)
         
     model_base = AutoModelForCausalLM.from_pretrained(model_dir,device_map = 'auto', use_cache=False)
     tokenizer.pad_token = tokenizer.eos_token
@@ -163,8 +163,8 @@ def SFT_data(int_name,adapter):
     print(model_base)
     
     collator = DataCollatorForCompletionOnlyLM_Multi(INVOCATION_PROMPT_SET, tokenizer=tokenizer)
-   
-  
+    
+    prefix = "feb24_4"
     if adapter != 'LoRA': # aLoRA model
         peft_config = aLoraConfig(
             r=32,
@@ -179,10 +179,10 @@ def SFT_data(int_name,adapter):
         response_token_ids = response_tokens['input_ids']
         peft_model = aLoRAPeftModelForCausalLM(model_base, peft_config,response_token_ids = response_token_ids)
         #tmp_dir = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp"
-        sft_args = SFTConfig(output_dir=SAVE_PATH + "/feb13_8bsft_Control_alora_sz32"+ int_name,
+        sft_args = SFTConfig(output_dir=SAVE_PATH + f"/{prefix}_8bsft_Control_alora_sz32"+ int_name,
                 evaluation_strategy = "steps",
                 eval_steps=300,
-                dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-7*5*10/5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True)
+                dataset_kwargs={"add_special_tokens":False},num_train_epochs=6,learning_rate=6e-7*5*10/5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True)
         trainer = SFTTrainer(
             peft_model,
             train_dataset=train_dataset,
@@ -196,7 +196,7 @@ def SFT_data(int_name,adapter):
         trainer.train()
         #load from best
         #peft_best = aLoRAPeftModelForCausalLM.from_pretrained(model_base,tmp_dir + '/adapter')
-        peft_model.save_pretrained(SAVE_PATH + "/feb13_8bsft_Control_alora_sz32_last"+ int_name)
+        peft_model.save_pretrained(SAVE_PATH + f"/{prefix}_8bsft_Control_alora_sz32_last"+ int_name)
 
 
 
@@ -215,10 +215,10 @@ def SFT_data(int_name,adapter):
         peft_model = PeftModelForCausalLM(model_base, peft_config)
         
         #tmp_dir = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp"
-        sft_args = SFTConfig(output_dir=SAVE_PATH + "/feb13_8bsft_Control_standard_lora_sz6"+ int_name,
+        sft_args = SFTConfig(output_dir=SAVE_PATH + f"/{prefix}_8bsft_Control_standard_lora_sz6"+ int_name,
                 evaluation_strategy = "steps",
                 eval_steps=300,
-                dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-7*5*10/5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True)
+                dataset_kwargs={"add_special_tokens":False},num_train_epochs=6,learning_rate=6e-7*5*10/5*2*2*5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True)
         trainer = SFTTrainer(
             peft_model,
             train_dataset=train_dataset,
@@ -249,7 +249,7 @@ def SFT_data(int_name,adapter):
         #)
         #trainer.train()
     
-        peft_model.save_pretrained(SAVE_PATH + "/feb13_8bsft_Control_standard_lora_sz6_last"+ int_name)
+        peft_model.save_pretrained(SAVE_PATH + f"/{prefix}_8bsft_Control_standard_lora_sz6_last"+ int_name)
         
 
  
