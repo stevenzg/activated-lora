@@ -592,7 +592,7 @@ class Linear(nn.Module, aLoraLayer):
 #        ks = [100000]
 #        print("layer forward")
 #        print(ks)
-        if self.disable_adapters:
+        if self.disable_adapters or ks[0] < 0:
             if self.merged:
                 self.unmerge()
             result = self.base_layer(x, *args, **kwargs)
