@@ -622,12 +622,14 @@ class Linear(nn.Module, aLoraLayer):
                     if len(ks) == 1:
                         k = min(result.shape[1],ks[0])
 #                        print(k)
-                        result[:,-k:,:] = result[:,-k:,:] + lora_B(lora_A(dropout(x[:,-k:,:]))) * scaling#dropout
+                        if k > 0:
+                            result[:,-k:,:] = result[:,-k:,:] + lora_B(lora_A(dropout(x[:,-k:,:]))) * scaling#dropout
                     else:
                         
                         for i in range(result.shape[0]):
                             ks[i] = min(ks[i], result.shape[1])
-                            result[i,-ks[i]:,:] = result[i,-ks[i]:,:] + lora_B(lora_A(dropout(x[i,-ks[i]:,:])))
+                            if ks[i] > 0:
+                                result[i,-ks[i]:,:] = result[i,-ks[i]:,:] + lora_B(lora_A(dropout(x[i,-ks[i]:,:])))
                 else:
                     warnings.warn("NOT SUPPORTED")
                     if isinstance(dropout, nn.Identity) or not self.training:
