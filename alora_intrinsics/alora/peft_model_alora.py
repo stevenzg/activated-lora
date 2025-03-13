@@ -1823,7 +1823,7 @@ class PeftModelForCausalLM(PeftModel):
         #elif self.alora_offsets is not None:
         #    alora_offsets = self.alora_offsets
         elif alora_offsets is None:
-            warnings.warn('ALoRA offsets not available or computed. Starting aLoRA at end of prompt.')
+            warnings.warn('ALoRA offsets not available or computed. Adapter disabled.')
             alora_offsets = [0] #Do not use adapter. This does need to be consistent from train to test though.
         
         #Pass forward to peft hooks
@@ -2010,7 +2010,7 @@ class PeftModelForCausalLM(PeftModel):
                                  f'following instance'
                                 f'{self.response_token_ids}'
                                     f'{input_ids[i]}'
-                             f"Setting alora_offsets to 0 (no adapter) "
+                             f"Setting alora_offsets to 0 (Starting aLoRA at end of prompt) "
                             )
                     #ks[i] = 1
 
@@ -2019,7 +2019,7 @@ class PeftModelForCausalLM(PeftModel):
                 #elif self.alora_offsets is not None:
                 #    alora_offsets = self.alora_offsets
                 elif alora_offsets is None:
-                    warnings.warn('ALoRA offsets not available or computed. Adapter disabled')
+                    warnings.warn('ALoRA offsets not available or computed. Starting aLoRA at end of prompt.')
                     alora_offsets = [0]
                 
 
