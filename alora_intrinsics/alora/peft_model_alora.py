@@ -1987,7 +1987,7 @@ class PeftModelForCausalLM(PeftModel):
                 if len(input_ids.shape) == 1:
                     input_ids = [args[0]]
                 if self.disable_adapters == True:
-                    alora_offsets = [0] #Do not use adapter.
+                    alora_offsets = [-1] #Do not use adapter.
                 # Figure out alora_offsets
                 elif alora_offsets is None and self.response_token_ids is not None:# and self.disable_adapters == False:
                     alora_offsets = [1]*len(input_ids)
