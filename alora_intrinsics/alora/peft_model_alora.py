@@ -1824,7 +1824,7 @@ class PeftModelForCausalLM(PeftModel):
         #    alora_offsets = self.alora_offsets
         elif alora_offsets is None:
             warnings.warn('ALoRA offsets not available or computed. Adapter disabled.')
-            alora_offsets = [0] #Do not use adapter. This does need to be consistent from train to test though.
+            alora_offsets = [-1] #Do not use adapter. This does need to be consistent from train to test though.
         
         #Pass forward to peft hooks
         kwargs['alora_offsets'] = alora_offsets      
