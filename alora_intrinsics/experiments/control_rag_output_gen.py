@@ -14,10 +14,10 @@ import json
 
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 
-peft_type = 'aLoRA' #'LoRA' #'aLoRA', 'base'
+peft_type = 'LoRA' #'LoRA' #'aLoRA', 'base'
 
 DATA_PATH = os.getenv("HF_DATASETS_CACHE")
-BASE_NAME = "ibm-granite/granite-3.1-8b-instruct"
+BASE_NAME = "ibm-granite/granite-3.2-8b-instruct"
 
 INVOCATION_PROMPT = "<|start_of_role|>"
 #Complete set of possible start sequences (for completion-only collator)
@@ -29,12 +29,12 @@ DATASET_FILES = ["test_raft.jsonl", "test_raft.jsonl", "test_raft.jsonl"]
 
 int_names = ["controlrag"]
 #int_names = ["ragControl"]
-prefix = 'feb21_8'
+prefix = 'mar19_1' #'mar10_555'
 if peft_type == 'aLoRA' or peft_type == 'base':
-    LORA_NAME = f"/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/{prefix}_8bsft_Control_alora_sz32_last"#_last #RAG_alora_sz32_highest"#+ int_name 
+    LORA_NAME = f"/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/{prefix}_8bsft_Control_alora_sz32"#_last #RAG_alora_sz32_highest"#+ int_name 
 else:
-    LORA_NAME = f"/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/{prefix}_8bsft_Control_standard_lora_sz6" #RAG_alora_sz32_highest"#+ int_name 
-output_file = f"control2{prefix}{peft_type}"#"output1000_base.jsonl"#alora32_3highestLR.jsonl"
+    LORA_NAME = f"/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/{prefix}_8bsft_Control_standard_lora_sz6_last" #RAG_alora_sz32_highest"#+ int_name 
+output_file = f"control1024_{prefix}{peft_type}"#"output1000_base.jsonl"#alora32_3highestLR.jsonl"
 
 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 token = os.getenv("HF_MISTRAL_TOKEN")
@@ -43,14 +43,17 @@ tokenizer = AutoTokenizer.from_pretrained(BASE_NAME,padding_side='left',trust_re
 model_base = AutoModelForCausalLM.from_pretrained(BASE_NAME,device_map="auto")
 
 
-if peft_type == 'aLoRA':
+if peft_type == 'aLoRA':# or peft_type=="base":
 
     model_alora = aLoRAPeftModelForCausalLM.from_pretrained(model_base, LORA_NAME + int_names[0],adapter_name = int_names[0], response_token_ids = None) #response_token_ids)
+elif peft_type == 'base':
+    model_alora = model_base
 else:
     model_alora = PeftModelForCausalLM.from_pretrained(model_base, LORA_NAME + int_names[0],adapter_name = int_names[0])
-for intname in int_names[1:]:
-    model_alora.load_adapter(LORA_NAME + intname, adapter_name = intname)
-model_alora.set_adapter(int_names[0])
+#for intname in int_names[1:]:
+ #   model_alora.load_adapter(LORA_NAME + intname, adapter_name = intname)
+if peft_type != 'base':
+    model_alora.set_adapter(int_names[0])
 
 
 
@@ -95,7 +98,10 @@ def process_datasets(datasets,model_alora,tokenizer,max_rows):
                 string = string[len(string_to_remove):]
             else:
                 string = tokenizer.apply_chat_template(conversation=convo[:-1],documents=docs, tokenize=False,add_generation_prompt=False)
-
+            if 1: # reorder to documents last
+                part1rest = string.split('<|start_of_role|>documents<|end_of_role|>')
+                part23 = part1rest[1].split('<|end_of_text|>')
+                string = part1rest[0] + part1rest[1][len(part23[0])+1:] + '<|start_of_role|>documents<|end_of_role|>' + part23[0] + '<|end_of_text|>'
             # Append invocation sequence here.  Doing manually to ensure consistency with data collator
             if lngth == "long":
                 ix = 0
@@ -119,13 +125,13 @@ def process_datasets(datasets,model_alora,tokenizer,max_rows):
             # Generate
             input_tokenized, alora_offsets = tokenize_alora(tokenizer,input_text, INVOCATION_PROMPT_SET[ix])
             if peft_type == 'base':
-                with model_alora.disable_adapter():
-                    output = model_alora.generate(input_tokenized["input_ids"].to(device), attention_mask=input_tokenized["attention_mask"].to(device), use_cache=True, max_new_tokens=500, return_dict_in_generate=True)
+                #with model_alora.disable_adapter():
+                output = model_base.generate(input_tokenized["input_ids"].to(device), attention_mask=input_tokenized["attention_mask"].to(device), use_cache=True, max_new_tokens=1024, return_dict_in_generate=True)
 
             if peft_type == 'aLoRA':
-                output = model_alora.generate(input_tokenized["input_ids"].to(device), attention_mask=input_tokenized["attention_mask"].to(device), use_cache=True, max_new_tokens=500, return_dict_in_generate=True, alora_offsets = alora_offsets)
+                output = model_alora.generate(input_tokenized["input_ids"].to(device), attention_mask=input_tokenized["attention_mask"].to(device), use_cache=True, max_new_tokens=1024, return_dict_in_generate=True, alora_offsets = alora_offsets)
             else:
-                output = model_alora.generate(input_tokenized["input_ids"].to(device), attention_mask=input_tokenized["attention_mask"].to(device), use_cache=True, max_new_tokens=500, return_dict_in_generate=True)
+                output = model_alora.generate(input_tokenized["input_ids"].to(device), attention_mask=input_tokenized["attention_mask"].to(device), use_cache=True, max_new_tokens=1024, return_dict_in_generate=True)
             
             
 

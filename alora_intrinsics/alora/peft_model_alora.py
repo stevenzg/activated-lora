@@ -2019,8 +2019,8 @@ class PeftModelForCausalLM(PeftModel):
                 #elif self.alora_offsets is not None:
                 #    alora_offsets = self.alora_offsets
                 elif alora_offsets is None:
-                    warnings.warn('ALoRA offsets not available or computed. Starting aLoRA at end of prompt.')
-                    alora_offsets = [0]
+                    warnings.warn('ALoRA offsets not available or computed. Adapter disabled.')
+                    alora_offsets = [-1]
                 
 
 #                print(ks)

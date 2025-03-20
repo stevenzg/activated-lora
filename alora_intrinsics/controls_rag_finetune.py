@@ -16,7 +16,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig, 
 
 
 DATA_PATH = os.getenv("HF_DATASETS_CACHE")
-MODEL_NAME = "ibm-granite/granite-3.1-8b-instruct"
+MODEL_NAME = "ibm-granite/granite-3.2-8b-instruct"
 
 #Universal start sequence (to turn on aLoRA)
 INVOCATION_PROMPT = "<|start_of_role|>"
@@ -68,7 +68,11 @@ def process_datasets(datasets,tokenizer,max_rows):
                 string = string[len(string_to_remove):]
             else:
                 string = tokenizer.apply_chat_template(conversation=convo[:-1],documents=docs, tokenize=False,add_generation_prompt=False)
-
+                part1rest = string.split('<|start_of_role|>documents<|end_of_role|>')
+                part23 = part1rest[1].split('<|end_of_text|>')
+                string = part1rest[0] + part1rest[1][len(part23[0])+1:] + '<|start_of_role|>documents<|end_of_role|>' + part23[0] + '<|end_of_text|>'
+                #print(string)
+                #print(docstr)
             # Append invocation sequence here.  Doing manually to ensure consistency with data collator
             if lngth == "long":
                 ix = 0
@@ -164,10 +168,10 @@ def SFT_data(int_name,adapter):
     
     collator = DataCollatorForCompletionOnlyLM_Multi(INVOCATION_PROMPT_SET, tokenizer=tokenizer)
     
-    prefix = "feb24_4"
+    prefix = "mar19_1"
     if adapter != 'LoRA': # aLoRA model
         peft_config = aLoraConfig(
-            r=32,
+            r=128,
             lora_alpha=32,
             lora_dropout=0.05,
             bias="none",
@@ -182,7 +186,7 @@ def SFT_data(int_name,adapter):
         sft_args = SFTConfig(output_dir=SAVE_PATH + f"/{prefix}_8bsft_Control_alora_sz32"+ int_name,
                 evaluation_strategy = "steps",
                 eval_steps=300,
-                dataset_kwargs={"add_special_tokens":False},num_train_epochs=6,learning_rate=6e-7*5*10/5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True)
+                dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-7*5*10/5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True)
         trainer = SFTTrainer(
             peft_model,
             train_dataset=train_dataset,
@@ -204,29 +208,29 @@ def SFT_data(int_name,adapter):
         #####################################################################
     else: #standard LoRA. THESE HYPERPARAMETERS ARE NOT TUNED
         peft_config = LoraConfig(
-            r=6,
+            r=16,
             lora_alpha=32,
             lora_dropout=0.05,
             bias="none",
             task_type="CAUSAL_LM",
-            target_modules=["q_proj","k_proj", "v_proj"],
+            target_modules=["q_proj", "k_proj",  "v_proj"],
             #layers_to_transform=[38,39]
         )
         peft_model = PeftModelForCausalLM(model_base, peft_config)
         
         #tmp_dir = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp"
         sft_args = SFTConfig(output_dir=SAVE_PATH + f"/{prefix}_8bsft_Control_standard_lora_sz6"+ int_name,
-                evaluation_strategy = "steps",
-                eval_steps=300,
-                dataset_kwargs={"add_special_tokens":False},num_train_epochs=6,learning_rate=6e-7*5*10/5*2*2*5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True)
+           #     evaluation_strategy = "steps",
+          #      eval_steps=300,
+                dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-7*5*10/5*2*2*5/32,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True)
         trainer = SFTTrainer(
             peft_model,
             train_dataset=train_dataset,
-            eval_dataset=val_dataset,
+         #   eval_dataset=val_dataset,
             args=sft_args,
             formatting_func=formatting_prompts_func,
         data_collator=collator,
-        callbacks=[SaveBestModelCallback()]
+        #callbacks=[SaveBestModelCallback()]
         #,
         )
         trainer.train()

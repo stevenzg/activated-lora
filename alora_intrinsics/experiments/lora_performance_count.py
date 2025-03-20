@@ -4,12 +4,12 @@ import json
 from transformers import AutoTokenizer,  AutoModelForCausalLM, DynamicCache
 from peft import PeftModelForCausalLM, LoraConfig
 #from alora_intrinsics.alora.config import aLoraConfig
-int_names = ["safety","certainty", "hallucination"]#"safety"
+int_names = ["certainty"]#["safety","certainty", "hallucination"]#"safety"
 CERTAINTY_PROMPT = "<|start_of_role|>certainty<|end_of_role|>"
 SAFETY_PROMPT = "<|start_of_role|>safety<|end_of_role|>"
 HALL_PROMPT = "<|start_of_role|>hallucination<|end_of_role|>"
 DATASET_PATH = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/UQ-PEFT-LLM/uq/data/"
-DATASET_FILES = ["uq_data_3_1.jsonl","hallucination_intrinsic_output.json", "safety-data-binary/combined_safe.jsonl", "safety-data-binary/combined_unsafe.jsonl"]
+DATASET_FILES = ["uq_data_3_1.jsonl"]#,"hallucination_intrinsic_output.json", "safety-data-binary/combined_safe.jsonl", "safety-data-binary/combined_unsafe.jsonl"]
 
 
 def get_datasets():
@@ -122,8 +122,8 @@ def process_datasets(datasets,model_UQ,tokenizer,max_rows):
 
 
 token = os.getenv("HF_MISTRAL_TOKEN")
-BASE_NAME = "ibm-granite/granite-3.1-8b-instruct"# '/proj/dmfexp/statllm/users/kgreenewald/models/granite-3.1-8b-instruct-r241212a'#"ibm-granite/granite-3.0-8b-instruct"
-LORA_NAME = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/feb6_8bsft_standard_lora_sz6_"#+ int_name 
+BASE_NAME = "ibm-granite/granite-3.2-8b-instruct"# '/proj/dmfexp/statllm/users/kgreenewald/models/granite-3.1-8b-instruct-r241212a'#"ibm-granite/granite-3.0-8b-instruct"
+LORA_NAME = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/mar12_8bsft_standard_lora_sz_4"#feb6_8bsft_standard_lora_sz6_"#+ int_name 
 #BASE_NAME = "ibm-granite/granite-3.0-8b-instruct"
 #LORA_NAME = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/UQ-PEFT-LLM/unified_intrinsics/models/8bsft_multiInt_lora_fixed2"#"ibm-granite/granite-uncertainty-3.0-8b-lora"
 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -152,7 +152,7 @@ for resp in response_templates:
 model_UQ = PeftModelForCausalLM.from_pretrained(model_base, LORA_NAME + int_names[0],adapter_name = int_names[0], response_token_ids = response_token_ids)
 for intname in int_names[1:]:
     model_UQ.load_adapter(LORA_NAME + intname, adapter_name = intname)
-model_UQ.set_adapter("safety")
+model_UQ.set_adapter(int_names[0])
 
 
 

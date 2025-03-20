@@ -13,7 +13,7 @@ HALL_PROMPT = "<|start_of_role|>hallucination<|end_of_role|>"
 token = os.getenv("HF_MISTRAL_TOKEN")
 
 BASE_NAME = "ibm-granite/granite-3.1-8b-instruct"#'/proj/dmfexp/statllm/users/kgreenewald/models/granite-3.1-8b-instruct-r241212a'#"ibm-granite/granite-3.0-8b-instruct"
-LORA_NAME = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/8bsft_aloraV2_sz32"#+ int_name 
+LORA_NAME = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/models/alora/feb6_8bsft_alora_sz32_"#+ int_name 
 
 
 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')

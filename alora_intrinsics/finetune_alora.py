@@ -16,13 +16,13 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 
 
 DATA_PATH = os.getenv("HF_DATASETS_CACHE")
-MODEL_NAME = "ibm-granite/granite-3.1-8b-instruct"
+MODEL_NAME = "ibm-granite/granite-3.2-8b-instruct"
 
 CERTAINTY_PROMPT = "<|start_of_role|>certainty<|end_of_role|>"
 SAFETY_PROMPT = "<|start_of_role|>safety<|end_of_role|>"
 HALL_PROMPT = "<|start_of_role|>hallucination<|end_of_role|>"
 DATASET_PATH = "/proj/dmfexp/statllm/users/kgreenewald/Thermometer/UQ-PEFT-LLM/uq/data/"
-DATASET_FILES = ["uq_data_3_1.jsonl","hallucination_intrinsic_output.json", "safety-data-binary/combined_safe.jsonl", "safety-data-binary/combined_unsafe.jsonl"]
+DATASET_FILES = ["uq_data_3_2.jsonl","hallucination_intrinsic_output.json", "safety-data-binary/combined_safe.jsonl", "safety-data-binary/combined_unsafe.jsonl"]
 
 
 def get_datasets():
@@ -65,7 +65,12 @@ def process_datasets(datasets,tokenizer,max_rows):
                 #print('hi')
                 #print(string)
             #else:
-            string = tokenizer.apply_chat_template(convo[:-1], tokenize=False,add_generation_prompt=False)
+            #### PRE AND POST ABILITIES
+            if 1:
+                if np.random.rand() > .5 and ds["conversations"][0][-1]["role"] == "certainty":
+                    string = tokenizer.apply_chat_template(convo[:-2], tokenize=False,add_generation_prompt=False)
+                else:#Remove assistant response
+                    string = tokenizer.apply_chat_template(convo[:-1], tokenize=False,add_generation_prompt=False)
             string_to_remove = tokenizer.apply_chat_template(convo[0:1], tokenize=False,add_generation_prompt=False)
             string = string[len(string_to_remove):]
             if convo[-1]["role"] == "Hallucination_tag":
@@ -169,10 +174,10 @@ def SFT_data(int_name,adapter):
         )
         trainer.train()
     
-        peft_model.save_pretrained(SAVE_PATH + "/feb6_8bsft_alora_sz32_"+ int_name)
+        peft_model.save_pretrained(SAVE_PATH + "/PREPOSTmar20_8b_32sft_alora_sz32_"+ int_name)
     else: #standard LoRA. THESE HYPERPARAMETERS ARE NOT TUNED
         peft_config = LoraConfig(
-            r=6,
+            r=4,
             lora_alpha=32,
             lora_dropout=0.05,
             bias="none",
@@ -191,7 +196,7 @@ def SFT_data(int_name,adapter):
         )
         trainer.train()
             
-        peft_model.save_pretrained(SAVE_PATH + "/feb6_8bsft_standard_lora_sz6_"+ int_name)
+        peft_model.save_pretrained(SAVE_PATH + "/PREPOSTmar20_8b_32sft_standard_lora_sz_4"+ int_name)
         
 
 
