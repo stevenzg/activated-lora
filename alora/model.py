@@ -39,7 +39,7 @@ from .config import aLoraConfig
 #from peft.eetq import dispatch_eetq
 #from peft.gptq import dispatch_gptq
 #from peft.hqq import dispatch_hqq
-from .layer import Conv2d, aLoraLayer, dispatch_default
+from .layer import aLoraLayer, dispatch_default
 #from peft.torchao import dispatch_torchao
 #from peft.tp_layer import dispatch_megatron
 
@@ -352,8 +352,7 @@ class aLoraModel(BaseTuner):
             # no module could be matched
             raise ValueError(
                 f"Target module {target} is not supported. Currently, only the following modules are supported: "
-                "`torch.nn.Linear`, `torch.nn.Embedding`, `torch.nn.Conv2d`, `torch.nn.Conv3d`, "
-                "`transformers.pytorch_utils.Conv1D`."
+                "`torch.nn.Linear`"
             )
 
         return new_module
@@ -783,7 +782,7 @@ class aLoraModel(BaseTuner):
         else:
             raise ValueError(f"Invalid value passed to combination type: {combination_type}")
 
-        conv2d = isinstance(target, Conv2d)
+        conv2d = False #isinstance(target, Conv2d)
         if conv2d:
             conv2d_1x1 = target.weight.size()[2:4] == (1, 1)
             if not conv2d_1x1:
