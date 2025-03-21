@@ -215,13 +215,14 @@ class aLoraConfig(PeftConfig):
             parameters so the bias of those parameters can be taken into account.
     """
 
-    r: int = field(default=8, metadata={"help": "Lora attention dimension"})
+    r: int = field(default=32, metadata={"help": "Lora attention dimension"})
     target_modules: Optional[Union[list[str], str]] = field(
         default=None,
         metadata={
             "help": (
                 "List of module names or regex expression of the module names to replace with LoRA."
-                "For example, ['q', 'v'] or '.*decoder.*(SelfAttention|EncDecAttention).*(q|v)$'."
+                "NOTE: activated LoRA assumes only adapters in the attention weights, i.e. q,k,v.
+                "For example, ['q', 'k', 'v'] or '.*decoder.*(SelfAttention|EncDecAttention).*(q|k|v)$'."
                 "This can also be a wildcard 'all-linear' which matches all linear/Conv1D layers except the output layer."
                 "If not specified, modules will be chosen according to the model architecture, If the architecture is "
                 "not known, an error will be raised -- in this case, you should specify the target modules manually."
