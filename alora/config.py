@@ -134,6 +134,9 @@ class aLoraConfig(PeftConfig):
             The names of the modules to not apply the adapter. When passing a string, a regex match will be performed.
             When passing a list of strings, either an exact match will be performed or it is checked if the name of the
             module ends with any of the passed strings.
+        invocation_string (`str`): 
+            String intended to activate the aLoRA. The aLoRA adapted weights will activate 1 token after the first token in this string. 
+            This string must be present in all input data.
         lora_alpha (`int`):
             The alpha parameter for Lora scaling.
         lora_dropout (`float`):
@@ -229,6 +232,7 @@ class aLoraConfig(PeftConfig):
         default=None,
         metadata={"help": "List of module names or regex expression of the module names to exclude from Lora."},
     )
+    invocation_string: str = field(metadata={"help": "aLoRA invocation string. The aLoRA adapted weights will activate 1 token after the first token in this string. This string must be present in all input data."})
     lora_alpha: int = field(default=8, metadata={"help": "Lora alpha"})
     lora_dropout: float = field(default=0.0, metadata={"help": "Lora dropout"})
     fan_in_fan_out: bool = field(
