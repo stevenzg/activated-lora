@@ -233,7 +233,7 @@ class aLoraConfig(PeftConfig):
         default=None,
         metadata={"help": "List of module names or regex expression of the module names to exclude from Lora."},
     )
-    invocation_string: str = field(metadata={"help": "aLoRA invocation string. The aLoRA adapted weights will activate 1 token after the first token in this string. This string must be present in all input data."})
+    invocation_string: str = field(default=None, metadata={"help": "aLoRA invocation string. The aLoRA adapted weights will activate 1 token after the first token in this string. This string must be present in all input data."})
     lora_alpha: int = field(default=8, metadata={"help": "Lora alpha"})
     lora_dropout: float = field(default=0.0, metadata={"help": "Lora dropout"})
     fan_in_fan_out: bool = field(
@@ -467,7 +467,8 @@ class aLoraConfig(PeftConfig):
                 )
             if self.use_dora:
                 raise ValueError("The argument lora_bias=True is not supported for DoRA, please pass use_dora=False")
-
+        if self.invocation_string is None:
+            raise ValueError("invocation_string cannot be None")
         # Using post training conversion of modified base weights to restore their initial values (PiSSA, OLoRA) cannot
         # be correctly done when using rslora + rank_pattern/alpha_pattern. We can't really know if the user intends
         # this when they'll eventually call save_pretrained (i.e. if they'll pass
