@@ -6,7 +6,7 @@ from datasets import Dataset, DatasetDict, load_from_disk, concatenate_datasets
 from sklearn.model_selection import train_test_split
 from trl import SFTConfig, SFTTrainer, DataCollatorForCompletionOnlyLM
 #alora
-from alora.peft_model_alora import PeftModelForCausalLM as aLoRAPeftModelForCausalLM
+from alora.peft_model_alora import aLoRAPeftModelForCausalLM
 from alora.config import aLoraConfig
 # standard lora
 from peft import PeftModelForCausalLM, LoraConfig
