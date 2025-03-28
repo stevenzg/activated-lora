@@ -1461,6 +1461,9 @@ class PeftModel(PushToHubMixin, torch.nn.Module):
             quantization_config = self.config.quantization_config.to_dict()
         training_config_text = ""
         quantization_prefix = "The following `bitsandbytes` quantization config was used during training:"
+        
+        if isinstance(self.peft_config[self.active_adapter], aLoraConfig):
+            training_config_text += f"\nActivated LoRA invocation string:\n{self.peft_config[self.active_adapter].invocation_string}"
         # Adds quantization information if it was used
         if quantization_config is not None:
             training_config_text += f"\n{quantization_prefix}\n"
