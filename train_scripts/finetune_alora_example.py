@@ -1,6 +1,5 @@
 import click, os, torch
 import numpy as np
-#from lakehouse.assets.config import DMF_MODEL_CACHE
 from datasets import Dataset, DatasetDict, load_from_disk, concatenate_datasets
 
 from sklearn.model_selection import train_test_split
@@ -17,14 +16,14 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 
 
 DATA_PATH = os.getenv("HF_DATASETS_CACHE")
-MODEL_NAME = "ibm-granite/granite-3.1-8b-instruct"
+MODEL_NAME = "ibm-granite/granite-3.2-8b-instruct"
 
 
 INVOCATION_PROMPT = "<|start_of_role|>certainty<|end_of_role|>"
 
-DATASET_PATH = "PATH_TO_DATA"
-DATASET_FILES = ["file1.jsonl","file2.json"]
-SAVE_PATH = "PATH_TO_SAVED_MODELS"
+DATASET_PATH = "./train_scripts"
+DATASET_FILES = ["example_data.jsonl"]
+SAVE_PATH = "./models"
 
 
 def get_datasets():
@@ -55,8 +54,8 @@ def process_datasets(datasets,tokenizer,max_rows):
     
         
         for i in range(0,min(len(ds["conversations"]),max_rs)):
-            convo = ds["conversations"][i]
-            if convo[0]["role"] != "system": #The Granite 3.1 chat template inserts a system prompt with today's date by default. We need to make a dummy system prompt and remove it from the string.
+            convo = ds["conversations"][i]["chat"]
+            if convo[0]["role"] != "system": #The Granite 3.1+ chat template inserts a system prompt with today's date by default. We need to make a dummy system prompt and remove it from the string.
                 # If a system prompt is not needed, it will need to be manually removed from the `string' below.
                 convo = [{"role":"system", "content": ""}] +convo#"You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."}] + convo
                 string = tokenizer.apply_chat_template(convo[:-1], tokenize=False,add_generation_prompt=False)
