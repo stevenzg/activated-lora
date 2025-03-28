@@ -129,6 +129,7 @@ def SFT_data(int_name):
             lora_dropout=0.05,
             bias="none",
             task_type="CAUSAL_LM",
+            invocation_string=INVOCATION_PROMPT,
             target_modules=["q_proj","k_proj", "v_proj"],#Can only do q, k, v layers (for now).
             #layers_to_transform=[38,39]
         )
