@@ -21,8 +21,7 @@ MODEL_NAME = "ibm-granite/granite-3.1-8b-instruct"
 
 
 INVOCATION_PROMPT = "<|start_of_role|>certainty<|end_of_role|>"
-# SAFETY_PROMPT = "<|start_of_role|>safety<|end_of_role|>"
-# HALL_PROMPT = "<|start_of_role|>hallucination<|end_of_role|>"
+
 DATASET_PATH = "PATH_TO_DATA"
 DATASET_FILES = ["file1.jsonl","file2.json"]
 SAVE_PATH = "PATH_TO_SAVED_MODELS"
