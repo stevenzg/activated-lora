@@ -1,6 +1,6 @@
 import torch,os, copy
 from transformers import AutoTokenizer,  AutoModelForCausalLM, DynamicCache
-from alora.peft_model_alora import PeftModelForCausalLM
+from alora.peft_model_alora import aLoRAPeftModelForCausalLM
 from alora.config import aLoraConfig
 from alora.tokenize_alora import tokenize_alora
 int_names = ["safety","certainty", "hallucination"]#"safety"
