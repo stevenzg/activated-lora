@@ -22,10 +22,12 @@ class aLoraConfig(LoraConfig):
     """
     This is the configuration class to store the configuration of an [`aLoraModel`].
 
-    It subclasses PEFT's LoraConfig and adds an additional parameter:
+    It subclasses PEFT's LoraConfig, modifies the default rank r to 32 (often best), and adds an additional parameter:
+        r (`int`): aLora attention dimension (the "rank"). Typically needs to be higher than used for standard Lora. Default=32.
         invocation_string (str): String intended to activate the aLoRA. The aLoRA adapted weights will activate
                                  1 token after the first token in this string. This string must be present in all input data.
     """
+    r: int = field(default=32, metadata={"help": "aLora attention dimension. Typically needs to be higher than used for standard Lora. Default=32."})
     invocation_string: str = field(
         default=None,
         metadata={
