@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name='alora',
     version='0.1.0',
-    description='A short description of alora',
+    description='Activated LoRA implementation utilizing HuggingFace packages.',
     author='Kristjan Greenewald',
     author_email='kristjan.h.greenewald@ibm.com',
     packages=find_packages(),
