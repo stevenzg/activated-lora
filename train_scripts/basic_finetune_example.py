@@ -4,10 +4,10 @@ from datasets import Dataset, DatasetDict, load_from_disk, concatenate_datasets
 
 from sklearn.model_selection import train_test_split
 from trl import SFTConfig, SFTTrainer, DataCollatorForCompletionOnlyLM
-#alora
+#alora model classes 
 from alora.peft_model_alora import aLoRAPeftModelForCausalLM
 from alora.config import aLoraConfig
-# standard lora
+# standard lora model classes (for comparison)
 from peft import PeftModelForCausalLM, LoraConfig
 import json
 
@@ -16,6 +16,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 
 
 DATA_PATH = os.getenv("HF_DATASETS_CACHE")
+#Base model
 MODEL_NAME = "ibm-granite/granite-3.2-8b-instruct"
 
 
@@ -24,20 +25,14 @@ INVOCATION_PROMPT = "<|start_of_role|>certainty<|end_of_role|>"
 DATASET_PATH = "./train_scripts"
 DATASET_FILES = ["example_data.jsonl"]
 SAVE_PATH = "./models"
-
+OUT_PATH = "./output"
 
 def get_datasets():
     datasets = []
     for ds in DATASET_FILES:
-        if ds[-1] == "n": #json
 
-            file = open(DATASET_PATH + '/' + ds)
-            data = json.load(file)
-
-
-        else: #jsonl
-            file = open(DATASET_PATH + '/' + ds)
-            data = {"conversations":[(json.loads(line))["messages"] for line in file]}
+        file = open(DATASET_PATH + '/' + ds)
+        data = {"conversations":[(json.loads(line))["messages"] for line in file]}
         datasets.append(data)
     return datasets
 def process_datasets(datasets,tokenizer,max_rows):
@@ -46,7 +41,6 @@ def process_datasets(datasets,tokenizer,max_rows):
     for ds in datasets:
         inputs = []
         targets = []
-        add = ""
 
 
 
@@ -66,15 +60,15 @@ def process_datasets(datasets,tokenizer,max_rows):
                 string = tokenizer.apply_chat_template(convo[:-1], tokenize=False,add_generation_prompt=False)
 
             # Append invocation sequence here.  
-            inputs.append(string + INVOCATION_PROMPT) #"<|start_of_role|>" + convo[-1]["role"] + "<|end_of_role|>" )
+            inputs.append(string + INVOCATION_PROMPT) 
 
             # Targets (that aLoRA is meant to learn to generate)
-            targets.append(convo[-1]["content"] + '<|end_of_text|>')
+            targets.append(convo[-1]["content"])
         proc_dict = dict()
         proc_dict['input'] = inputs
         proc_dict['target'] = targets
 
-
+        # Print example data
         print(ds["conversations"][0])
         print(inputs[0])
         print(targets[0])
@@ -92,35 +86,31 @@ def formatting_prompts_func(example):
 
 
 @click.command()
-@click.option('--int_name', type=click.STRING, help='dataset')
-def SFT_data(int_name):
+@click.option('--adapter', type=click.STRING, help='aLoRA or LoRA')
+def SFT_data(adapter):
 
     data = get_datasets()
 
-
-    # Load model
-    model_name = MODEL_NAME
-
+    # Huggingface token
     token = os.getenv("HF_MISTRAL_TOKEN")
-    model_dir = model_name
-    tokenizer = AutoTokenizer.from_pretrained(model_dir,padding_side='right',trust_remote_code=True,token=token)
-        
-    model_base = AutoModelForCausalLM.from_pretrained(model_dir,device_map = 'auto', use_cache=False)
-    tokenizer.pad_token = tokenizer.eos_token
-    
-    tokenizer.add_special_tokens = False
-    datasets = process_datasets(data,tokenizer,max_rows = 400000)
 
+    # Load tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME,padding_side='right',trust_remote_code=True,token=token)
+    # Load base model
+    model_base = AutoModelForCausalLM.from_pretrained(MODEL_NAME,device_map = 'auto', use_cache=False)
+    tokenizer.pad_token = tokenizer.eos_token
+    # Process training data
+    datasets = process_datasets(data,tokenizer,max_rows = 400000)
+    # Merge data if multiple files
     merged_dataset = concatenate_datasets(datasets)
+    # Subsample data randomly
     subsample_size = 40000
     merged_dataset = merged_dataset.shuffle(seed=42).select(range(min(len(merged_dataset),subsample_size)))
-
-    print(model_base)
-    
+    # Data collator
     collator = DataCollatorForCompletionOnlyLM(INVOCATION_PROMPT, tokenizer=tokenizer)
    
-  
-    if 1: # aLoRA model
+    # Train the model
+    if adapter != "LoRA": # aLoRA model
         peft_config = aLoraConfig(
             r=32,
             lora_alpha=32,
@@ -128,7 +118,7 @@ def SFT_data(int_name):
             bias="none",
             task_type="CAUSAL_LM",
             invocation_string=INVOCATION_PROMPT,
-            target_modules=["q_proj","k_proj", "v_proj"],#Can only do q, k, v layers (for now).
+            target_modules=["q_proj","k_proj", "v_proj"],#Important - aLoRA must only adapt q, k, v layers.
             #layers_to_transform=[38,39]
         )
         response_tokens = tokenizer(INVOCATION_PROMPT, return_tensors="pt", add_special_tokens=False)
@@ -137,14 +127,13 @@ def SFT_data(int_name):
         trainer = SFTTrainer(
             peft_model,
             train_dataset=merged_dataset,
-            args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
+            args=SFTConfig(output_dir=OUT_PATH,num_train_epochs=3,learning_rate=6e-5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
             formatting_func=formatting_prompts_func,
         data_collator=collator
-        #,
         )
         trainer.train()
     
-        peft_model.save_pretrained(SAVE_PATH + "/8bsft_alora_sz32"+ int_name)
+        peft_model.save_pretrained(SAVE_PATH + "/8bsft_alora_sz32")
     else: #standard LoRA. 
         peft_config = LoraConfig(
             r=6,
@@ -159,7 +148,7 @@ def SFT_data(int_name):
         trainer = SFTTrainer(
             peft_model,
             train_dataset=merged_dataset,
-            args=SFTConfig(output_dir="/proj/dmfexp/statllm/users/kgreenewald/Thermometer/tmp",dataset_kwargs={"add_special_tokens":False},num_train_epochs=3,learning_rate=6e-5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
+            args=SFTConfig(output_dir=OUT_PATH,num_train_epochs=3,learning_rate=6e-5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
             formatting_func=formatting_prompts_func,
         data_collator=collator
         #,
