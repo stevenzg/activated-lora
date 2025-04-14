@@ -38,7 +38,8 @@ python train_scripts/basic_finetune_example.py --adapter LoRA
 
 An expanded training script with a save model callback is at [`train_scripts/finetune_example_callback.py`](train_scripts/finetune_example_callback.py)
 
-This callback saves the model whenever the loss on the provided validation data is best so far. This can be used to revert to back to the model with the best validation loss.
+**Behavior** This callback saves the model whenever the loss on the provided validation data is best so far. This can be used to revert to back to the model with the best validation loss.
+
 ---
 
 ## Inference: "Hello World" Example
