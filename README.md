@@ -53,7 +53,7 @@ python train_scripts/basic_finetune_example.py --adapter LoRA
 
 **Key points**
 
-*aLoRA will need larger rank than a corresponding LoRA model, often rank 32 works well.
+* aLoRA will need larger rank than a corresponding LoRA model, often rank 32 works well.
 * An invocation string must be defined, the adapted weights are activated *one token after this sequence begins*. As such, it must be included in the input strings in your training data, or added in during the training script.
 * The invocation string can simply be the standard generation prompt, when searching the string, the code looks for the last use of the invocation sequence in the string.
 * The invocation string is saved in the aLoraConfig, which is included as a file in the model save directory when saving. This allows for recovery when loading the model later.
