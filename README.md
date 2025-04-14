@@ -27,11 +27,11 @@ The main implementation can be found in:
 
 This repo implements aLoRA using the [Huggingface PEFT library](https://huggingface.co/docs/peft/en/index). 
 
-In so doing, it
+In so doing, it introduces aLoRA specific classes that subclass relevant PEFT classes, allowing for as much functionality from PEFT to be carried over as possible. Throughout, the goal is to enable seamless integration of these aLoRA classes into preexisting LoRA training pipelines as much as possible (see **Important notes** and **Limitations** below).
 
 **Limitations** The aLoRA architecture--since it seeks to re-use base model cache--only is supported with CausalLM models, and adapters must *only* be applied to the attention modules, i.e. the queries, keys, and values (e.g.[`q_proj`, `k_proj`, `v_proj`]).
 
-**Important note** While aLoRA uses low-rank adaptation of the weight matrices just like LoRA, since the usage of the weights is different in the architecture, models trained as LoRAs will not work if run as aLoRAs, and vice versa.
+**Important notes** While aLoRA uses low-rank adaptation of the weight matrices just like LoRA, since the usage of the weights is different in the architecture, models trained as LoRAs will not work if run as aLoRAs, and vice versa. Similarly, hyperparameter settings will not carry over between aLoRA and LoRA, indeed **aLoRA will typically need higher rank, e.g. `r=32`**.
 
 ---
 
@@ -61,7 +61,11 @@ An expanded training script with a save model callback is at [`train_scripts/fin
 
 ## Inference Example
 
-Inference with an aLoRA model is done as follows. Note that the aLoRA model classes are used explicitly, and the invocation sequence here must match the one the model was trained with (saved in the aLoRA config).
+A simple test script is available for a trained **Uncertainty Quantification aLoRA** [Granite 3.2 8B Instruct - Uncertainty aLoRA](https://huggingface.co/ibm-granite/granite-3.2-8b-alora-uncertainty), optionally reusing the **base model kV cache** and using **Hugging Face libraries** for generation:
+
+**Test script location:** [`experiments/inference_example.py`](experiments/inference_example.py)
+
+In its most basic form, inference with an aLoRA model can be done as follows. Note that the aLoRA model classes are used explicitly, and the invocation sequence here gets the one the model was trained with (saved in the aLoRA config). The `INVOCATION_SEQUENCE` is appended to the input, tokenized, and its token length computed by `tokenize_alora`. `alora_offsets` passes this (length-1) to the aLoRA model, giving it the necessary location to turn on the adapter weights in the token sequence.
 ```python
 from alora.peft_model_alora import aLoRAPeftModelForCausalLM
 from alora.config import aLoraConfig
@@ -73,15 +77,13 @@ ALORA_NAME="ALORA_ADAPTER_LOCATION"
 
 model_base = AutoModelForCausalLM.from_pretrained(BASE_MODEL,device_map = 'auto')
 model_alora = aLoRAPeftModelForCausalLM.from_pretrained(model_base,ALORA_NAME)
-INVOCATION_SEQUENCE = model_alora.config.invocation_string
+INVOCATION_SEQUENCE = model_alora.peft_config.invocation_string
 
 inputs, alora_offsets = tokenize_alora(tokenizer,input_string + "\n", INVOCATION_SEQUENCE)
 out_gen = model_alora.generate(inputs["input_ids"].to(device), attention_mask=inputs["attention_mask"].to(device), max_new_tokens=200, alora_offsets=alora_offsets)
 ```
 
-A simple test script is available for a trained **Uncertainty Quantification aLoRA** [Granite 3.2 8B Instruct - Uncertainty aLoRA](https://huggingface.co/ibm-granite/granite-3.2-8b-alora-uncertainty), optionally reusing the **base model kV cache** and using **Hugging Face libraries** for generation:
 
-**Test script location:** [`experiments/inference_example.py`](experiments/inference_example.py)
 
 ## vLLM
 
