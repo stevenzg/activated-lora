@@ -38,10 +38,11 @@ class aLoraConfig(LoraConfig):
         }
     )
 
-    def __post_init__(self):
+    def __post_init__(self, *args, invocation_string=None, r=32, **kwargs):
         # Call the parent's __post_init__ to initialize all the fields
-        super().__post_init__()
+        super().__post_init__(*args, r=r, **kwargs)
         # Validate the additional field
+        self.invocation_string = invocation_string
         if self.invocation_string is None:
             warnings.warn("invocation_string cannot be None", UserWarning)
 
