@@ -128,6 +128,10 @@ def SFT_data(adapter):
     # Subsample data randomly
     subsample_size = 40000
     merged_dataset = merged_dataset.shuffle(seed=42).select(range(min(len(merged_dataset),subsample_size)))
+
+    # NOTE: Here actually put your separate validation set
+    val_dataset = merged_dataset
+    
     # Data collator
     collator = DataCollatorForCompletionOnlyLM(INVOCATION_PROMPT, tokenizer=tokenizer)
    
@@ -149,9 +153,12 @@ def SFT_data(adapter):
         trainer = SFTTrainer(
             peft_model,
             train_dataset=merged_dataset,
-            args=SFTConfig(output_dir=OUT_PATH,num_train_epochs=3,learning_rate=6e-5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
+            eval_dataset=val_dataset,
+            args=SFTConfig(output_dir=OUT_PATH,num_train_epochs=3,learning_rate=6e-5,max_seq_length = 4096,per_device_train_batch_size = 1,evaluation_strategy = "steps",
+                eval_steps=300,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
             formatting_func=formatting_prompts_func,
-        data_collator=collator
+            data_collator=collator,
+            callbacks=[SaveBestModelCallback()]
         )
         trainer.train()
     
@@ -170,10 +177,11 @@ def SFT_data(adapter):
         trainer = SFTTrainer(
             peft_model,
             train_dataset=merged_dataset,
-            args=SFTConfig(output_dir=OUT_PATH,num_train_epochs=3,learning_rate=6e-5,max_seq_length = 4096,per_device_train_batch_size = 1,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
+            args=SFTConfig(output_dir=OUT_PATH,num_train_epochs=3,learning_rate=6e-5,max_seq_length = 4096,per_device_train_batch_size = 1,evaluation_strategy = "steps",
+                eval_steps=300,save_strategy="no",gradient_accumulation_steps=8,fp16=True),
             formatting_func=formatting_prompts_func,
-        data_collator=collator
-        #,
+            data_collator=collator,
+            callbacks=[SaveBestModelCallback()]
         )
         trainer.train()
     
