@@ -43,7 +43,7 @@ class aLoraConfig(LoraConfig):
         super().__post_init__()
         # Validate the additional field
         if self.invocation_string is None:
-            raise ValueError("invocation_string cannot be None")
+            warnings.warn("invocation_string cannot be None", UserWarning)
 
 
 
