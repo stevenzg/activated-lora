@@ -26,7 +26,7 @@ Right now, this script runs on a very small example JSONL data file [`train_scri
 ---
 
 ## Inference: "Hello World" Example
-A simple test script is available for a trained **Uncertainty Quantification aLoRA** [https://huggingface.co/ibm-granite/granite-3.2-8b-alora-uncertainty](Granite 3.2 8B Instruct - Uncertainty aLoRA) optionally reusing the **base model kV cache** and using **Hugging Face libraries** for generation:
+A simple test script is available for a trained **Uncertainty Quantification aLoRA** [Granite 3.2 8B Instruct - Uncertainty aLoRA](https://huggingface.co/ibm-granite/granite-3.2-8b-alora-uncertainty) optionally reusing the **base model kV cache** and using **Hugging Face libraries** for generation:
 
 **Test script location:** [`experiments/inference_example.py`](experiments/inference_example.py)
 
