@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 import warnings
@@ -16,6 +14,22 @@ from peft.utils import PeftType
 
 
 from peft import LoraConfig  
+
+
+def _check_and_remove_unused_kwargs(cls, kwargs):
+    """Make PEFT configs forward-compatible by removing unused kwargs that were added in later PEFT versions.
+
+    This assumes that removing the unused kwargs will not affect the default behavior.
+
+    Returns the filtered kwargs and the set of removed keys.
+    """
+    # it's not pretty but eh
+    signature_parameters = inspect.signature(cls.__init__).parameters
+    unexpected_kwargs = set(kwargs.keys()) - set(signature_parameters.keys())
+    for key in unexpected_kwargs:
+        del kwargs[key]
+    return kwargs, unexpected_kwargs
+
 
 @dataclass
 class aLoraConfig(LoraConfig):
@@ -38,13 +52,133 @@ class aLoraConfig(LoraConfig):
         }
     )
 
-    def __post_init__(self, *args, invocation_string=None, r=32, **kwargs):
+    def __post_init__(self): #, *args, invocation_string=None, r=32, **kwargs):
         # Call the parent's __post_init__ to initialize all the fields
-        super().__post_init__(*args, r=r, **kwargs)
+        super().__post_init__() #*args, r=r, **kwargs)
         # Validate the additional field
-        self.invocation_string = invocation_string
+
         if self.invocation_string is None:
             warnings.warn("invocation_string cannot be None", UserWarning)
+
+
+
+
+
+
+
+    def from_peft_type(**kwargs):
+        r"""
+        This method loads the configuration of your adapter model from a set of kwargs.
+
+        The appropriate configuration type is determined by the `peft_type` argument. If `peft_type` is not provided,
+        the calling class type is instantiated.
+
+        Args:
+            kwargs (configuration keyword arguments):
+                Keyword arguments passed along to the configuration initialization.
+        """
+        # Avoid circular dependency .. TODO: fix this with a larger refactor
+        #from peft.mapping import PEFT_TYPE_TO_CONFIG_MAPPING
+
+        # TODO: this hack is needed to fix the following issue (on commit 702f937):
+        # if someone saves a default config and loads it back with `PeftConfig` class it yields to
+        # not loading the correct config class.
+        #
+        # from peft import AdaLoraConfig, PeftConfig
+        # peft_config = AdaLoraConfig()
+        # print(peft_config)
+        # >>> AdaLoraConfig(peft_type=<PeftType.ADALORA: 'ADALORA'>, auto_mapping=None, base_model_name_or_path=None,
+        # revision=None, task_type=None, inference_mode=False, r=8, target_modules=None, lora_alpha=8, lora_dropout=0.0, ...
+        #
+        # peft_config.save_pretrained("./test_config")
+        # peft_config = PeftConfig.from_pretrained("./test_config")
+        # print(peft_config)
+        # >>> PeftConfig(peft_type='ADALORA', auto_mapping=None, base_model_name_or_path=None, revision=None, task_type=None, inference_mode=False)
+
+        #if "peft_type" in kwargs:
+        #    peft_type = kwargs["peft_type"]
+        config_cls = aLoraConfig #PEFT_TYPE_TO_CONFIG_MAPPING[peft_type]
+        #else:
+            
+
+        print(kwargs)
+        try:
+            config = config_cls(**kwargs)
+        except TypeError as exc:
+            # Here we potentially handle forward compatibility. Sometimes new keywords are added to configs, which makes
+            # new configs incompatible with older PEFT versions. We catch these and remove them to allow the program to
+            # continue, but warn the user about it.
+
+            # First check if the error is due to unexpected keyword arguments, we don't want to accidentally catch
+            # other TypeErrors.
+            if "got an unexpected keyword argument" not in str(exc):
+                raise exc
+
+            filtered_kwargs, unexpected_kwargs = _check_and_remove_unused_kwargs(config_cls, kwargs)
+            MIN_EXPECTED_CONFIG_KEYS = {"peft_type"}
+            if not MIN_EXPECTED_CONFIG_KEYS.issubset(set(filtered_kwargs.keys())):
+                raise TypeError(
+                    f"The {cls.__name__} config that is trying to be loaded is missing required keys: "
+                    f"{MIN_EXPECTED_CONFIG_KEYS}."
+                )
+
+            warnings.warn(
+                f"Unexpected keyword arguments {sorted(unexpected_kwargs)} for class {config_cls.__name__}, these are "
+                "ignored. This probably means that you're loading a configuration file that was saved using a "
+                "higher version of the library and additional parameters have been introduced since. It is "
+                "highly recommended to upgrade the PEFT version before continuing (e.g. by running `pip install "
+                "-U peft`)."
+            )
+            config = config_cls.from_peft_type(**filtered_kwargs)
+        return config
+
+
+
+# from __future__ import annotations
+
+# import warnings
+# from dataclasses import dataclass, field
+# from typing import Literal, Optional, Union
+
+# from torch import nn
+# import enum
+# from peft.config import PeftConfig
+# from peft.utils import PeftType
+# #class PeftType(str, enum.Enum):
+# #    ALORA = "ALORA"
+
+
+
+# from peft import LoraConfig  
+
+# @dataclass
+# class aLoraConfig(LoraConfig):
+#     """
+#     This is the configuration class to store the configuration of an [`aLoraModel`].
+
+#     It subclasses PEFT's LoraConfig, modifies the default rank r to 32 (often best), and adds an additional parameter:
+#         r (`int`): aLora attention dimension (the "rank"). Typically needs to be higher than used for standard Lora. Default=32.
+#         invocation_string (str): String intended to activate the aLoRA. The aLoRA adapted weights will activate
+#                                  1 token after the first token in this string. This string must be present in all input data.
+#     """
+#     r: int = field(default=32, metadata={"help": "aLora attention dimension. Typically needs to be higher than used for standard Lora. Default=32."})
+#     invocation_string: str = field(
+#         default=None,
+#         metadata={
+#             "help": (
+#                 "aLoRA invocation string. The aLoRA adapted weights will activate 1 token after the first token in "
+#                 "this string. This string must be present in all input data."
+#             )
+#         }
+#     )
+
+#     def __post_init__(self, *args, invocation_string=None, r=32, **kwargs):
+#         # Call the parent's __post_init__ to initialize all the fields
+#         super().__post_init__(*args, r=r, **kwargs)
+#         # Validate the additional field
+#         self.invocation_string = invocation_string
+#         if self.invocation_string is None:
+#             warnings.warn("invocation_string cannot be None", UserWarning)
 
 
 
