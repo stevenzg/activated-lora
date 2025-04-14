@@ -84,6 +84,28 @@ def formatting_prompts_func(example):
         output_texts.append(text)
     return output_texts
 
+# Model callback example. Saves checkpoint if eval loss is best so far.
+class SaveBestModelCallback(TrainerCallback):
+    def __init__(self):
+        self.best_eval_loss = float("inf")  # Track best loss
+
+    def on_evaluate(self, args, state, control, **kwargs):
+        """Save the best model manually during evaluation."""
+
+        model = kwargs["model"]
+        metrics = kwargs["metrics"]
+        
+        eval_loss = metrics.get("eval_loss")
+        if eval_loss is not None and eval_loss < self.best_eval_loss:
+            self.best_eval_loss = eval_loss  # Update best loss
+          
+
+            # Ensure tied weights are applied before saving
+            #if getattr(trainer.model, "tie_weights", None):
+            #    trainer.model.tie_weights()
+
+            # Manually save best model
+            model.save_pretrained(args.output_dir)
 
 @click.command()
 @click.option('--adapter', type=click.STRING, help='aLoRA or LoRA')
