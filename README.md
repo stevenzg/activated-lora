@@ -8,7 +8,7 @@ See [`activated_LoRA.pdf`](activated_LoRA.pdf) for a detailed description of the
 ## Source Code
 The main implementation can be found in:
 
-**Source directory:** [`alora/`](alora_intrinsics/alora/)
+**Source directory:** [`alora/`](alora/)
 
 ---
 
@@ -16,17 +16,19 @@ The main implementation can be found in:
 To train an **Activated LoRA**, use the following script as a guide:
 
 ```bash
-python train_scripts/finetune_alora_example.py --int_name <INTRINSIC_NAME>
+python train_scripts/finetune_alora_example.py --adapter aLoRA
 ```
 
 **Script location:** [`train_scripts/finetune_alora_example.py`](train_scripts/finetune_alora_example.py)
 
+Right now, this script runs on a very small example JSONL data file [`train_scripts/example_data.jsonl`](train_scripts/example_data.jsonl)
+
 ---
 
-## Testing: "Hello World" Example
-A simple test script is available for running three trained **intrinsic aLoRAs** using the **kV cache** and **Hugging Face libraries**:
+## Inference: "Hello World" Example
+A simple test script is available for a trained **Uncertainty Quantification aLoRA** [https://huggingface.co/ibm-granite/granite-3.2-8b-alora-uncertainty](Granite 3.2 8B Instruct - Uncertainty aLoRA) optionally reusing the **base model kV cache** and using **Hugging Face libraries** for generation:
 
-**Test script location:** [`experiments/cache_hello_world.py`](experiments/cache_hello_world.py)
+**Test script location:** [`experiments/inference_example.py`](experiments/inference_example.py)
 
 ---
 
@@ -38,12 +40,7 @@ pip install -r requirements.txt
 ```
 
 
----
 
-## Example Data
-An example dataset in JSONL format is available for formatting reference:
-
-**Data file:** [`example_data.jsonl`](example_data.jsonl)
 
 
 
