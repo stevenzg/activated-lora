@@ -87,7 +87,7 @@ out_gen = model_alora.generate(inputs["input_ids"].to(device), attention_mask=in
 
 ## vLLM
 
-vLLM support is not included here yet.
+vLLM support coming soon.
 
 
 
