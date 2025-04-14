@@ -99,9 +99,7 @@ class aLoraConfig(LoraConfig):
         #    peft_type = kwargs["peft_type"]
         config_cls = aLoraConfig #PEFT_TYPE_TO_CONFIG_MAPPING[peft_type]
         #else:
-            
-
-        print(kwargs)
+     
         try:
             config = config_cls(**kwargs)
         except TypeError as exc:
