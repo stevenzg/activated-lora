@@ -88,6 +88,24 @@ python train_scripts/basic_finetune_example.py --adapter aLoRA
 
 The key part of the code (for the aLoRA architecture) is here:
 ```python
+from alora.peft_model_alora import aLoRAPeftModelForCausalLM
+from alora.config import aLoraConfig
+...
+peft_config = aLoraConfig(
+  r=32,
+  lora_alpha=32,
+  lora_dropout=0.05,
+  bias="none",
+  task_type="CAUSAL_LM",
+  invocation_string=INVOCATION_PROMPT,
+  target_modules=["q_proj","k_proj", "v_proj"],#Important - aLoRA must only adapt q, k, v layers.
+)
+response_tokens = tokenizer(INVOCATION_PROMPT, return_tensors="pt", add_special_tokens=False)
+response_token_ids = response_tokens['input_ids']
+# Create the aLoRA model
+peft_model = aLoRAPeftModelForCausalLM(model_base, peft_config,response_token_ids = response_token_ids)
+...
+# continue to train with SFTTrainer...
 ```
 
 This script runs on a very small example JSONL data file [`train_scripts/example_data.jsonl`](train_scripts/example_data.jsonl)
