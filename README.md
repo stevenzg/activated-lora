@@ -49,7 +49,7 @@ A simple inference script is available for a trained **Uncertainty Quantificatio
 
 **Inference Example Script location:** [`experiments/inference_example.py`](experiments/inference_example.py)
 
-The example in the script with KV cache reuse can be visualized as follows. 1) The base model prefills the question and any supporting documents (e.g. if in a RAG system) and generates an answer based off of that KV cache plus any previously existing KV cache for the context. 2) The Uncertainty Quantification aLoRA is invoked, the invocation string (instruction) is prefilled, and the aLoRA model can generate a response using all available KV cache (no need to redo prefill of the vast majority of the context!). 
+The example in the script with KV cache reuse can be visualized as follows. 1) The base model prefills the question and any supporting documents (e.g. if in a RAG system) and generates an answer based off of that KV cache plus any previously existing KV cache for the context. 2) The Uncertainty Quantification aLoRA is invoked, the invocation string (instruction) is prefilled, and the aLoRA model can generate a response using all available KV cache (unlike LoRA, no need to redo prefill of the vast majority of the context!). 
 
 ![image](https://github.ibm.com/Kristjan-H-Greenewald/activated-lora/assets/142635/522074f6-9771-484d-a69f-cd39ef391c2d)
 
