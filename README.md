@@ -51,8 +51,7 @@ A simple inference script is available for a trained **Uncertainty Quantificatio
 
 The example in the script with KV cache reuse can be visualized as follows. 1) The base model prefills the question and any supporting documents (e.g. if in a RAG system) and generates an answer based off of that KV cache plus any previously existing KV cache for the context. 2) The Uncertainty Quantification aLoRA is invoked, the invocation string (instruction) is prefilled, and the aLoRA model can generate a response using all available KV cache (no need to redo prefill of the vast majority of the context!). 
 
-<img width="1079" alt="image" src="https://github.ibm.com/Kristjan-H-Greenewald/activated-lora/assets/142635/588fc2a8-1658-4c87-98ba-cae944e888cf">
-
+![image](https://github.ibm.com/Kristjan-H-Greenewald/activated-lora/assets/142635/522074f6-9771-484d-a69f-cd39ef391c2d)
 
 ### Bare minimum inference commands (w/o cache reuse)
 For simplicity and to make the commands clear, we also show the simplest possible inference. In its most basic form, inference with an aLoRA model can be done as follows. Note that the aLoRA model classes are used explicitly, and the invocation sequence here gets the one the model was trained with (saved in the aLoRA config). The `INVOCATION_SEQUENCE` is appended to the input, tokenized, and its token length computed by `tokenize_alora`. `alora_offsets` passes this (length-1) to the aLoRA model, giving it the necessary location to turn on the adapter weights in the token sequence.
