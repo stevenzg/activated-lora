@@ -123,6 +123,7 @@ def SFT_data(adapter):
         )
         response_tokens = tokenizer(INVOCATION_PROMPT, return_tensors="pt", add_special_tokens=False)
         response_token_ids = response_tokens['input_ids']
+        # Create aLoRA model, including tokenized invocation string to ensure weights are activated when needed.
         peft_model = aLoRAPeftModelForCausalLM(model_base, peft_config,response_token_ids = response_token_ids)
         trainer = SFTTrainer(
             peft_model,
