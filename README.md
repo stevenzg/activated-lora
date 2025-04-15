@@ -1,6 +1,6 @@
 # Activated LoRA (aLoRA)
 
-Activated LoRA (aLoRA) is a new low rank adapter architecture that allows for reusing existing base model KV cache for more efficient inference. 
+Activated LoRA (aLoRA) is a new low rank adapter architecture that allows for reusing existing base model KV cache for more efficient inference, unlike standard LoRA models. As a result, aLoRA models can be quickly invoked as-needed for specialized tasks during (long) flows where the base model is primarily used, avoiding potentially expensive prefill costs in terms of latency, throughput, and GPU memory. See the whitepaper for a detailed discussion of these advantages and how they scale with context length, number of aLoRAs used, etc. 
 
 This repo contains source code necessary to both train and do inference with aLoRA models.
 
@@ -32,6 +32,47 @@ In so doing, it introduces aLoRA specific classes that subclass relevant PEFT cl
 **Limitations** The aLoRA architecture--since it seeks to re-use base model cache--only is supported with CausalLM models, and adapters must *only* be applied to the attention modules, i.e. the queries, keys, and values (e.g.[`q_proj`, `k_proj`, `v_proj`]).
 
 **Important notes** While aLoRA uses low-rank adaptation of the weight matrices just like LoRA, since the usage of the weights is different in the architecture, models trained as LoRAs will not work if run as aLoRAs, and vice versa. Similarly, hyperparameter settings will not carry over between aLoRA and LoRA, indeed **aLoRA will typically need higher rank, e.g. `r=32`**.
+
+
+---
+## Getting Started
+
+For inference with existing aLoRA models (e.g. from Huggingface): see **Inference Example** below.
+
+For training models: see **Training Example** below.
+
+---
+
+## Inference Example
+
+A simple inference script is available for a trained **Uncertainty Quantification aLoRA** [Granite 3.2 8B Instruct - Uncertainty aLoRA](https://huggingface.co/ibm-granite/granite-3.2-8b-alora-uncertainty), showing how to switch between the base model and the aLoRA while reusing the **base model kV cache** and using **Hugging Face libraries** for generation:
+
+**Inference Example Script location:** [`experiments/inference_example.py`](experiments/inference_example.py)
+
+The example in the script with KV cache reuse can be visualized as follows. 1) The base model prefills the question and any supporting documents (e.g. if in a RAG system) and generates an answer based off of that KV cache plus any previously existing KV cache for the context. 2) The Uncertainty Quantification aLoRA is invoked, the invocation string (instruction) is prefilled, and the aLoRA model can generate a response using all available KV cache (no need to redo prefill of the vast majority of the context!). 
+
+<img width="1079" alt="image" src="https://github.ibm.com/Kristjan-H-Greenewald/activated-lora/assets/142635/588fc2a8-1658-4c87-98ba-cae944e888cf">
+
+
+### Bare minimum inference commands (w/o cache reuse)
+For simplicity and to make the commands clear, we also show the simplest possible inference. In its most basic form, inference with an aLoRA model can be done as follows. Note that the aLoRA model classes are used explicitly, and the invocation sequence here gets the one the model was trained with (saved in the aLoRA config). The `INVOCATION_SEQUENCE` is appended to the input, tokenized, and its token length computed by `tokenize_alora`. `alora_offsets` passes this (length-1) to the aLoRA model, giving it the necessary location to turn on the adapter weights in the token sequence.
+```python
+from alora.peft_model_alora import aLoRAPeftModelForCausalLM
+from alora.config import aLoraConfig
+from alora.tokenize_alora import tokenize_alora
+
+BASE_MODEL="BASE_MODEL_LOCATION"
+ALORA_NAME="ALORA_ADAPTER_LOCATION"
+
+
+model_base = AutoModelForCausalLM.from_pretrained(BASE_MODEL,device_map = 'auto')
+model_alora = aLoRAPeftModelForCausalLM.from_pretrained(model_base,ALORA_NAME)
+INVOCATION_SEQUENCE = model_alora.peft_config.invocation_string
+
+inputs, alora_offsets = tokenize_alora(tokenizer,input_string + "\n", INVOCATION_SEQUENCE)
+out_gen = model_alora.generate(inputs["input_ids"].to(device), attention_mask=inputs["attention_mask"].to(device), max_new_tokens=200, alora_offsets=alora_offsets)
+```
+The above simple example does not reuse the KV cache from the base model, see the inference script for details on how to do that.
 
 ---
 
@@ -68,31 +109,6 @@ An expanded training script with a save model callback is at [`train_scripts/fin
 
 **Behavior** This callback saves the model whenever the loss on the provided validation data is best so far. This can be used to revert to back to the model with the best validation loss. The frequency of checking the validation loss can be set by adjusting the standard arguments to SFTTrainer.
 
----
-
-## Inference Example
-
-A simple test script is available for a trained **Uncertainty Quantification aLoRA** [Granite 3.2 8B Instruct - Uncertainty aLoRA](https://huggingface.co/ibm-granite/granite-3.2-8b-alora-uncertainty), optionally reusing the **base model kV cache** and using **Hugging Face libraries** for generation:
-
-**Test script location:** [`experiments/inference_example.py`](experiments/inference_example.py)
-
-In its most basic form, inference with an aLoRA model can be done as follows. Note that the aLoRA model classes are used explicitly, and the invocation sequence here gets the one the model was trained with (saved in the aLoRA config). The `INVOCATION_SEQUENCE` is appended to the input, tokenized, and its token length computed by `tokenize_alora`. `alora_offsets` passes this (length-1) to the aLoRA model, giving it the necessary location to turn on the adapter weights in the token sequence.
-```python
-from alora.peft_model_alora import aLoRAPeftModelForCausalLM
-from alora.config import aLoraConfig
-from alora.tokenize_alora import tokenize_alora
-
-BASE_MODEL="BASE_MODEL_LOCATION"
-ALORA_NAME="ALORA_ADAPTER_LOCATION"
-
-
-model_base = AutoModelForCausalLM.from_pretrained(BASE_MODEL,device_map = 'auto')
-model_alora = aLoRAPeftModelForCausalLM.from_pretrained(model_base,ALORA_NAME)
-INVOCATION_SEQUENCE = model_alora.peft_config.invocation_string
-
-inputs, alora_offsets = tokenize_alora(tokenizer,input_string + "\n", INVOCATION_SEQUENCE)
-out_gen = model_alora.generate(inputs["input_ids"].to(device), attention_mask=inputs["attention_mask"].to(device), max_new_tokens=200, alora_offsets=alora_offsets)
-```
 
 
 
