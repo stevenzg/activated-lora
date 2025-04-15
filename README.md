@@ -90,6 +90,8 @@ The key part of the code (for the aLoRA architecture) is here:
 ```python
 from alora.peft_model_alora import aLoRAPeftModelForCausalLM
 from alora.config import aLoraConfig
+
+INVOCATION_PROMPT = "<|start_of_role|>certainty<|end_of_role|>" # feel free to use any desired string or prompt so long as you are consistent
 ...
 peft_config = aLoraConfig(
   r=32,
@@ -102,7 +104,7 @@ peft_config = aLoraConfig(
 )
 response_tokens = tokenizer(INVOCATION_PROMPT, return_tensors="pt", add_special_tokens=False)
 response_token_ids = response_tokens['input_ids']
-# Create the aLoRA model
+# Create the aLoRA model, including tokenized invocation string to ensure weights are activated when needed.
 peft_model = aLoRAPeftModelForCausalLM(model_base, peft_config,response_token_ids = response_token_ids)
 ...
 # continue to train with SFTTrainer...
@@ -122,6 +124,7 @@ python train_scripts/basic_finetune_example.py --adapter LoRA
 * aLoRA will need larger rank than a corresponding LoRA model, often rank 32 works well.
 * An invocation string must be defined, the adapted weights are activated *one token after this sequence begins*. As such, it must be included in the input strings in your training data, or added in during the training script.
 * The invocation string can simply be the standard generation prompt, when searching the string, the code looks for the last use of the invocation sequence in the string.
+* It is a good idea to have the invocation string begin and end with special tokens, to ensure that it is always tokenized as the same token sequence when encountered.
 * The invocation string is saved in the aLoraConfig, which is included as a file in the model save directory when saving. This allows for recovery when loading the model later.
 * For now, the invocation sequence must be tokenized and passed to the aLoRA model prior to training. This is not necessary at inference time.
   
