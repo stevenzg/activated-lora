@@ -39,7 +39,7 @@ In so doing, it introduces aLoRA specific classes that subclass relevant PEFT cl
 
 For inference with existing aLoRA models (e.g. from Huggingface): see **Inference Example** below.
 
-For training models: see **Training Example** below.
+For training models: see **Training Example** below to get started with creating aLoRA models and training them with `SFTTrainer` from Huggingface.
 
 ---
 
@@ -86,12 +86,18 @@ python train_scripts/basic_finetune_example.py --adapter aLoRA
 
 **Script location:** [`train_scripts/finetune_alora_example.py`](train_scripts/basic_finetune_example.py)
 
+The key part of the code (for the aLoRA architecture) is here:
+```python
+```
+
 This script runs on a very small example JSONL data file [`train_scripts/example_data.jsonl`](train_scripts/example_data.jsonl)
 
 Note that this code includes standard LoRA training for comparison, it can be called with 
 ```bash
 python train_scripts/basic_finetune_example.py --adapter LoRA
 ```
+
+
 
 **Key points**
 
