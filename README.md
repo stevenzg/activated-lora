@@ -29,7 +29,7 @@ This repo implements aLoRA using the [Huggingface PEFT library](https://huggingf
 
 In so doing, it introduces aLoRA specific classes that subclass relevant PEFT classes, allowing for as much functionality from PEFT to be carried over as possible. Throughout, the goal is to enable seamless integration of these aLoRA classes into preexisting LoRA training pipelines as much as possible (see **Important notes** and **Limitations** below).
 
-**Limitations** The aLoRA architecture--since it seeks to re-use base model cache--only is supported with CausalLM models, and adapters must *only* be applied to the attention modules, i.e. the queries, keys, and values (e.g.[`q_proj`, `k_proj`, `v_proj`]).
+**Limitations** The aLoRA architecture---since it seeks to re-use base model cache---only is supported with CausalLM models, and adapters must *only* be applied to the attention modules, i.e. the queries, keys, and values (e.g.[`q_proj`, `k_proj`, `v_proj`]).
 
 **Important notes** While aLoRA uses low-rank adaptation of the weight matrices just like LoRA, since the usage of the weights is different in the architecture, models trained as LoRAs will not work if run as aLoRAs, and vice versa. Similarly, hyperparameter settings will not carry over between aLoRA and LoRA, indeed **aLoRA will typically need higher rank, e.g. `r=32`**.
 
@@ -48,6 +48,8 @@ For training models: see **Training Example** below.
 A simple inference script is available for a trained **Uncertainty Quantification aLoRA** [Granite 3.2 8B Instruct - Uncertainty aLoRA](https://huggingface.co/ibm-granite/granite-3.2-8b-alora-uncertainty), showing how to switch between the base model and the aLoRA while reusing the **base model kV cache** and using **Hugging Face libraries** for generation:
 
 **Inference Example Script location:** [`experiments/inference_example.py`](experiments/inference_example.py)
+
+In this script, a user question "What is IBM Research?" is asked, the base model (Granite 3.2 8b instruct) is invoked to answer the query, and the Uncertainty aLoRA is then invoked to generate a certainty score for the answer of the base model (see [Granite 3.2 8B Instruct - Uncertainty aLoRA](https://huggingface.co/ibm-granite/granite-3.2-8b-alora-uncertainty) for an explanation of how this certainty score is defined).
 
 The example in the script with KV cache reuse can be visualized as follows. 1) The base model prefills the question and any supporting documents (e.g. if in a RAG system) and generates an answer based off of that KV cache plus any previously existing KV cache for the context. 2) The Uncertainty Quantification aLoRA is invoked, the invocation string (instruction) is prefilled, and the aLoRA model can generate a response using all available KV cache (unlike LoRA, no need to redo prefill of the vast majority of the context!). 
 
