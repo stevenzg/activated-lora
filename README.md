@@ -6,7 +6,7 @@ This repo contains source code necessary to both train and do inference with aLo
 
 Whitepaper: [`activated_LoRA.pdf`](activated_LoRA.pdf) for a detailed description of the method and some results.
 
-Blogpost: COMING
+IBM Research Blogpost: [`Inference Friendly aLoRAs`](https://research.ibm.com/blog/inference-friendly-aloras)
 
 
 ---
