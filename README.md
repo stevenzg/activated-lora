@@ -12,7 +12,7 @@ IBM Research Blogpost: [`Inference Friendly aLoRAs`](https://research.ibm.com/bl
 ---
 ## Installation
 ```bash
-pip install git+ssh://git@github.ibm.com:Kristjan-H-Greenewald/activated-lora.git
+pip install git+ssh://git@github.com:IBM/activated-lora.git
 ```
 
 ---
