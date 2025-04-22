@@ -8,7 +8,7 @@ REUSE_CACHE = True  # If True, demonstrate KV cache reuse (slightly more complex
 
 token = os.getenv("HF_MISTRAL_TOKEN")
 BASE_NAME = "ibm-granite/granite-3.2-8b-instruct"
-ALORA_NAME = "ibm-granite/granite-uncertainty-3.2-8b-alora"
+ALORA_NAME = "ibm-granite/granite-3.2-8b-alora-uncertainty"
 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Load model
