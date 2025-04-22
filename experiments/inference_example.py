@@ -49,7 +49,7 @@ print("Answer: " + answer)
 
 # Generate certainty score
 #Get Invocation string to append to input.
-uq_generation_prompt = model_UQ.peft_config.invocation_string #For UQ, this is "<|start_of_role|>certainty<|end_of_role|>" 
+uq_generation_prompt = model_UQ.peft_config[model_UQ.active_adapter].invocation_string #For UQ, this is "<|start_of_role|>certainty<|end_of_role|>" 
 uq_chat = question_chat + [
     {
         "role": "assistant",
