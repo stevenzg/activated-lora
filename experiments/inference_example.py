@@ -28,7 +28,7 @@ question_chat = [
 # Generate answer with base model
 input_text = tokenizer.apply_chat_template(question_chat,tokenize=False,add_generation_prompt=True)
 # Remove default system prompt (Granite chat template)
-len_sys = len(input_text.split("<|start_of_role|>user"))
+len_sys = len(input_text.split("<|start_of_role|>user")[0])
 input_text = input_text[len_sys:]
 
 #tokenize
@@ -44,7 +44,7 @@ else: #simplest call
         output = model_UQ.generate(inputs["input_ids"].to(device), attention_mask=inputs["attention_mask"].to(device), max_new_tokens=600)
 output_text = tokenizer.decode(output[0])
 # Base model answer (split uses Granite chat template)
-answer = output_text.split("assistant<|end_of_role|>")[1]
+answer = output_text.split("assistant<|end_of_role|>")[-1].split("<|end_of_text|>")[0]
 print("Answer: " + answer)
 
 # Generate certainty score
