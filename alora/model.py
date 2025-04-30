@@ -325,7 +325,7 @@ class aLoraModel(BaseTuner):
             dispatchers.append(dispatch_bnb_8bit)
 
         if is_bnb_4bit_available():
-            from peft.bnb import dispatch_bnb_4bit
+            from peft.tuners.lora.bnb import dispatch_bnb_4bit
 
             dispatchers.append(dispatch_bnb_4bit)
 
